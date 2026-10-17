@@ -80,10 +80,20 @@ export default function RealLeafletRouteCompareMap({
       });
       mapInstanceRef.current = map;
 
-      // CartoDB Voyager tiles
+      // Free Clean GIS Canvas tiles (NO API key, NO watermarks)
       L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        { subdomains: 'abcd', maxZoom: 19 }
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 16,
+          attribution: '© Esri, OpenStreetMap',
+        }
+      ).addTo(map);
+
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 16,
+        }
       ).addTo(map);
 
       const paths = routeCorridors.default;
