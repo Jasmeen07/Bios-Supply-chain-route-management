@@ -1,12 +1,25 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Header from '../../components/Header';
 import DemoBanner from '../../components/DemoBanner';
 import { api } from '../../lib/api';
 import { RouteCompareData, RouteAlternative, Shipment } from '../../lib/types';
 import { CheckCircle2, GitBranch, Clock, DollarSign, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+
+const RealLeafletRouteCompareMap = dynamic(
+  () => import('../../components/RealLeafletRouteCompareMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[340px] bg-cream-50 rounded-xl border border-cream-border flex items-center justify-center text-xs text-charcoal-500">
+        Loading route GIS visualizer...
+      </div>
+    ),
+  }
+);
 
 function RoutePlanningContent() {
   const searchParams = useSearchParams();
@@ -130,89 +143,13 @@ function RoutePlanningContent() {
             </span>
           </div>
 
-          {/* SVG Map of the Route Corridor */}
-          <div className="w-full h-[320px] bg-[#FAF8F5] rounded-xl border border-cream-border overflow-hidden relative flex items-center justify-center">
-            <svg viewBox="0 0 600 300" className="w-full h-full">
-              {/* Background grid */}
-              <defs>
-                <pattern id="route-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#F0EBE1" strokeWidth="0.5" />
-                </pattern>
-              </defs>
-              <rect width="600" height="300" fill="#FAF7F2" />
-              <rect width="600" height="300" fill="url(#route-grid)" opacity="0.7" />
-
-              {/* Current Route (Red dashed with alert) */}
-              <path
-                d="M 100 220 Q 300 250 500 80"
-                stroke="#DC2626"
-                strokeWidth="3.5"
-                strokeDasharray="6,6"
-                fill="none"
-              />
-
-              {/* Candidate Alternative 1 (Deep Emerald, Solid, Highlighted) */}
-              <path
-                d="M 100 220 Q 220 90 500 80"
-                stroke="#16A34A"
-                strokeWidth={selectedAltIndex === 0 ? "4.5" : "2"}
-                strokeDasharray={selectedAltIndex === 0 ? "none" : "3,3"}
-                fill="none"
-                opacity={selectedAltIndex === 0 ? "1" : "0.5"}
-              />
-
-              {/* Candidate Alternative 2 (Amber dashed) */}
-              <path
-                d="M 100 220 Q 380 40 500 80"
-                stroke="#F59E0B"
-                strokeWidth={selectedAltIndex === 1 ? "4" : "2"}
-                strokeDasharray="4,4"
-                fill="none"
-                opacity={selectedAltIndex === 1 ? "1" : "0.5"}
-              />
-
-              {/* Origin Marker */}
-              <g transform="translate(100, 220)">
-                <circle r="9" fill="#2A2724" stroke="#FFFFFF" strokeWidth="2" />
-                <text x="-25" y="22" fontSize="11" fontWeight="bold" fill="#2A2724">
-                  {currentShipment?.origin_name || 'Shenzhen'}
-                </text>
-              </g>
-
-              {/* Destination Marker */}
-              <g transform="translate(500, 80)">
-                <circle r="9" fill="#16A34A" stroke="#FFFFFF" strokeWidth="2" />
-                <text x="-20" y="-14" fontSize="11" fontWeight="bold" fill="#2A2724">
-                  {currentShipment?.destination_name || 'Delhi NCR'}
-                </text>
-              </g>
-
-              {/* Disruption Icon on Current Route */}
-              <g transform="translate(320, 230)">
-                <circle r="14" fill="#FEE2E2" stroke="#EF4444" strokeWidth="1" />
-                <ShieldAlert className="w-4 h-4 text-red-600" x="-8" y="-8" />
-                <text x="18" y="4" fontSize="10" fontWeight="bold" fill="#B91C1C">
-                  Blocked Lane
-                </text>
-              </g>
-            </svg>
-
-            {/* Path Legend Overlay */}
-            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-3 py-2 rounded-xl border border-cream-border text-[11px] space-y-1 shadow-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-0.5 bg-red-600"></span>
-                <span className="font-medium text-charcoal-700">Current Impaired Route</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-0.5 bg-emerald-600"></span>
-                <span className="font-medium text-charcoal-700">Alternative 1 (Recommended Bypass)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-0.5 bg-amber-500"></span>
-                <span className="font-medium text-charcoal-700">Alternative 2 (Northern Maritime)</span>
-              </div>
-            </div>
-          </div>
+          {/* Real Leaflet Map of the Route Corridor */}
+          <RealLeafletRouteCompareMap
+            routeData={routeData}
+            selectedAltIndex={selectedAltIndex}
+            originCity={currentShipment?.origin_name}
+            destinationCity={currentShipment?.destination_name}
+          />
 
           {/* Current Route Stats vs Chosen Alternative */}
           {routeData && (
