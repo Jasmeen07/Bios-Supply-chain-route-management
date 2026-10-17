@@ -1,0 +1,83 @@
+{
+  "shipment_id": "S-104",
+  "priority": "balanced",
+  "current": {
+    "route_id": "route_curr_104",
+    "route_name": "Standard Direct via Shenzhen-Singapore-Santos Corridor",
+    "lane_ids": ["L_shenzhen_singapore", "L_singapore_santos"],
+    "distance_km": 18500,
+    "duration_h": 224.0,
+    "cost": 33200,
+    "risk_score": 86,
+    "level": "high",
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [[114.0579, 22.5431], [103.8198, 1.3521], [-46.3322, -23.9618]]
+    }
+  },
+  "alternatives": [
+    {
+      "route_id": "route_alt_1",
+      "route_name": "Optimized Transshipment via Singapore Deep Hub",
+      "lane_ids": ["L_shenzhen_singapore_bypass", "L_singapore_santos_express"],
+      "distance_km": 18950,
+      "duration_h": 172.0,
+      "cost": 34450,
+      "risk_score": 28,
+      "level": "low",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[114.0579, 22.5431], [108.0, 10.0], [103.8198, 1.3521], [60.0, -10.0], [-46.3322, -23.9618]]
+      },
+      "rank": 1,
+      "utility": 0.88,
+      "delta": {
+        "duration_h": -52.0,
+        "cost_pct": 3.8,
+        "risk": -58
+      }
+    },
+    {
+      "route_id": "route_alt_2",
+      "route_name": "Northern Maritime Corridor via Rotterdam Hub",
+      "lane_ids": ["L_shenzhen_shanghai", "L_shanghai_rotterdam", "L_rotterdam_ny"],
+      "distance_km": 26270,
+      "duration_h": 190.0,
+      "cost": 36100,
+      "risk_score": 38,
+      "level": "medium",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[114.0579, 22.5431], [121.4737, 31.2304], [4.4777, 51.9244], [-74.0060, 40.7128]]
+      },
+      "rank": 2,
+      "utility": 0.74,
+      "delta": {
+        "duration_h": -34.0,
+        "cost_pct": 8.7,
+        "risk": -48
+      }
+    },
+    {
+      "route_id": "route_alt_3",
+      "route_name": "Direct Air Cargo Expedited Route",
+      "lane_ids": ["L_air_shenzhen_delhi"],
+      "distance_km": 3750,
+      "duration_h": 36.0,
+      "cost": 58000,
+      "risk_score": 15,
+      "level": "low",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[114.0579, 22.5431], [90.0, 25.0], [77.2090, 28.6139]]
+      },
+      "rank": 3,
+      "utility": 0.62,
+      "delta": {
+        "duration_h": -188.0,
+        "cost_pct": 74.7,
+        "risk": -71
+      }
+    }
+  ]
+}
