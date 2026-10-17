@@ -1,120 +1,187 @@
 {
-  "id": "d_101",
-  "type": "supplier_delay",
+  "id": "d_6904eda8",
+  "type": "inventory",
   "entity": {
-    "type": "supplier",
-    "id": "SUP_shenzhen_01",
-    "name": "Shenzhen Precision Electronics",
-    "location_label": "Shenzhen, China"
+    "type": "location_sku",
+    "id": "ahmedabad::SKU-AUTO",
+    "name": "Ahmedabad \u2013 SKU-AUTO"
   },
-  "severity": 0.88,
-  "confidence": 0.82,
-  "risk_score": 86,
-  "level": "high",
+  "severity": 0.3714,
+  "confidence": 0.95,
+  "risk_score": 15.1,
+  "level": "low",
   "status": "open",
-  "detected_at": "2026-10-17T12:30:00Z",
-  "time_ago": "2 hrs ago",
-  "issue_title": "Supplier delay",
-  "impact_summary": "Component shortage",
+  "detected_at": "2026-10-17T13:23:21.986835Z",
+  "resolved_at": null,
   "impact": {
-    "affected_shipments": ["S-104", "S-109"],
-    "extra_delay_h": 48.0,
-    "stockout_date": "2026-10-21",
-    "units_short": 420,
-    "revenue_at_risk": 185000
+    "affected_shipments": [],
+    "extra_delay_h": 0.0,
+    "stockout_date": "2026-10-24",
+    "units_short": 26.2,
+    "revenue_at_risk": 125760.0,
+    "margin_at_risk": 18864.0
   },
   "evidence": [
     {
-      "source": "supplier-telemetry",
-      "simulated": true,
-      "metric": "lead_time_z_score",
-      "value": 3.2,
-      "unit": "z",
-      "ts": "2026-10-17T12:25:00Z"
+      "source": "inventory-db",
+      "simulated": false,
+      "metric": "days_of_cover",
+      "value": 6.92,
+      "ts": "2026-10-17T13:23:21.986804Z"
     },
     {
-      "source": "erp-order-tracking",
-      "simulated": true,
-      "metric": "on_time_rate",
-      "value": 62.4,
-      "unit": "%",
-      "ts": "2026-10-17T12:20:00Z"
-    },
-    {
-      "source": "historical-shipment-log",
-      "simulated": true,
-      "metric": "rolling_avg_delay_hours",
-      "value": 38.5,
-      "unit": "hours",
-      "ts": "2026-10-17T11:45:00Z"
+      "source": "inventory-db",
+      "simulated": false,
+      "metric": "effective_lead_days",
+      "value": 8.0,
+      "ts": "2026-10-17T13:23:21.986811Z"
     }
   ],
   "recommendations": [
     {
-      "id": "r_501",
-      "disruption_id": "d_101",
+      "id": "r_f756c651",
+      "disruption_id": "d_6904eda8",
       "rank": 1,
-      "action_type": "reroute",
-      "title": "Reroute via Singapore",
-      "explanation": "Avoid congestion at Shenzhen. Estimated delay reduction: 2-3 days.",
-      "delay_saved_h": 52.0,
-      "cost_delta_pct": 3.8,
-      "risk_reduction": 58,
-      "confidence": 0.84,
+      "action_type": "rebalance",
+      "title": "Transfer SKU-AUTO from Nagpur to Ahmedabad",
+      "explanation": "Transfer 12 units of SKU-AUTO from Nagpur (currently 6.4 days cover) to Ahmedabad. This avoids a stockout while a replenishment order arrives.",
+      "delay_saved_h": 0.0,
+      "cost_delta": 589.0,
+      "cost_delta_pct": 0.0,
+      "risk_reduction": 9.1,
+      "confidence": 0.85,
       "status": "proposed",
       "params": {
-        "shipment_id": "S-104",
-        "new_waypoint": "Singapore Transshipment Center"
+        "from_location_id": "nagpur",
+        "to_location_id": "ahmedabad",
+        "sku": "SKU-AUTO",
+        "qty": 11.775
       },
       "evidence": [
         {
-          "source": "graph-router",
-          "simulated": true,
-          "metric": "delay_reduction_days",
-          "value": 2.5,
-          "unit": "days",
-          "ts": "2026-10-17T12:31:00Z"
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "days_of_cover",
+          "value": 6.92,
+          "ts": "2026-10-17T13:23:21.986804Z"
+        },
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "effective_lead_days",
+          "value": 8.0,
+          "ts": "2026-10-17T13:23:21.986811Z"
         }
-      ]
+      ],
+      "feasible": true
     },
     {
-      "id": "r_502",
-      "disruption_id": "d_101",
+      "id": "r_0b143d03",
+      "disruption_id": "d_6904eda8",
       "rank": 2,
-      "action_type": "alternate_supplier",
-      "title": "Activate alternate supplier",
-      "explanation": "Component stock below threshold. Switch to qualified supplier in Vietnam.",
-      "delay_saved_h": 40.0,
-      "cost_delta_pct": 5.2,
-      "risk_reduction": 44,
-      "confidence": 0.80,
+      "action_type": "rebalance",
+      "title": "Transfer SKU-AUTO from Delhi NCR to Ahmedabad",
+      "explanation": "Transfer 96 units of SKU-AUTO from Delhi NCR (currently 12.6 days cover) to Ahmedabad. This avoids a stockout while a replenishment order arrives.",
+      "delay_saved_h": 0.0,
+      "cost_delta": 4788.0,
+      "cost_delta_pct": 0.0,
+      "risk_reduction": 9.1,
+      "confidence": 0.85,
       "status": "proposed",
       "params": {
-        "new_supplier_id": "SUP_vietnam_02",
-        "reallocated_units": 420
+        "from_location_id": "delhi",
+        "to_location_id": "ahmedabad",
+        "sku": "SKU-AUTO",
+        "qty": 95.75
       },
       "evidence": [
         {
-          "source": "supplier-index",
-          "simulated": true,
-          "metric": "supplier_lead_time_days",
-          "value": 3.0,
-          "unit": "days",
-          "ts": "2026-10-17T12:31:00Z"
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "days_of_cover",
+          "value": 6.92,
+          "ts": "2026-10-17T13:23:21.986804Z"
+        },
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "effective_lead_days",
+          "value": 8.0,
+          "ts": "2026-10-17T13:23:21.986811Z"
         }
-      ]
+      ],
+      "feasible": true
+    },
+    {
+      "id": "r_280745f9",
+      "disruption_id": "d_6904eda8",
+      "rank": 3,
+      "action_type": "increase_safety_stock",
+      "title": "Increase safety stock for SKU-AUTO at ahmedabad",
+      "explanation": "Raise the safety stock level for SKU-AUTO at ahmedabad by 5 days of demand (121 units). Estimated monthly holding cost: \u20b9347,760. This protects against future supply disruptions.",
+      "delay_saved_h": 0.0,
+      "cost_delta": 347760.0,
+      "cost_delta_pct": 60.0,
+      "risk_reduction": 6.0,
+      "confidence": 0.9,
+      "status": "proposed",
+      "params": {
+        "location_id": "ahmedabad",
+        "sku": "SKU-AUTO",
+        "extra_days": 5
+      },
+      "evidence": [
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "days_of_cover",
+          "value": 6.92,
+          "ts": "2026-10-17T13:23:21.986804Z"
+        },
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "effective_lead_days",
+          "value": 8.0,
+          "ts": "2026-10-17T13:23:21.986811Z"
+        }
+      ],
+      "feasible": true
+    },
+    {
+      "id": "r_285e885a",
+      "disruption_id": "d_6904eda8",
+      "rank": 4,
+      "action_type": "monitor",
+      "title": "Monitor \u2013 no immediate action",
+      "explanation": "Continue monitoring Ahmedabad \u2013 SKU-AUTO. Current risk score: 15 (low). Projected extra delay: 0.0 h. Revenue at risk: \u20b90. This option has zero cost change but accepts full delay and risk.",
+      "delay_saved_h": 0.0,
+      "cost_delta": 0.0,
+      "cost_delta_pct": 0.0,
+      "risk_reduction": 0.0,
+      "confidence": 0.95,
+      "status": "proposed",
+      "params": {},
+      "evidence": [
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "days_of_cover",
+          "value": 6.92,
+          "ts": "2026-10-17T13:23:21.986804Z"
+        },
+        {
+          "source": "inventory-db",
+          "simulated": false,
+          "metric": "effective_lead_days",
+          "value": 8.0,
+          "ts": "2026-10-17T13:23:21.986811Z"
+        }
+      ],
+      "feasible": true
     }
   ],
-  "history": [
-    {
-      "ts": "2026-10-17T12:30:00Z",
-      "event": "disruption_detected",
-      "description": "Supplier lead time drift detected (z=3.2, on-time=62.4%). Risk score calculated: 86 (High)."
-    },
-    {
-      "ts": "2026-10-17T12:31:00Z",
-      "event": "recommendations_generated",
-      "description": "Generated 2 candidate actions (Reroute via Singapore, Activate Alternate Supplier Vietnam)."
-    }
-  ]
+  "issue_title": "Inventory - Ahmedabad \u2013 SKU-AUTO",
+  "impact_summary": "0 shipments affected, +0.0h delay, \u20b9125,760 at risk",
+  "time_ago": "0m ago"
 }

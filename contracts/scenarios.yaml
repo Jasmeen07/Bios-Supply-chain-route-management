@@ -1,288 +1,297 @@
-version: "1.0"
+version: "1.0.0"
 scenarios:
-  # Positive scenarios (15)
-  - id: "sc_01"
-    name: "Heavy rain on Mumbai-Pune corridor"
-    description: "Monsoon storm with heavy precipitation (>25mm/h) and high wind gusts on the Mumbai to Pune lane."
+  # ── Positive Scenarios ────────────────────────────────────────────────────────
+  - id: "SCN_01"
+    name: "Heavy Rain on Western Freight Corridor"
+    description: "Heavy rain and thunderstorm forecast along the Pune to Delhi freight corridor."
     type: "weather"
+    entity_type: "lane"
+    entity_id: "L_pune_delhi"
+    severity_min: 0.75
+    expected_level: "high"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
     inject:
-      target_type: "lane"
-      target_id: "L_mumbai_pune"
-      metric: "precip_mm_per_h"
-      value: 26.5
-      wind_gust_kmh: 85
-    expected:
-      disruption_type: "weather"
-      min_level: "high"
-      acceptable_actions: ["reroute", "monitor"]
-
-  - id: "sc_02"
-    name: "Highway closure between Nagpur and Hyderabad"
-    description: "Major highway blockage causing traffic multiplier > 2.2x on Nagpur-Hyderabad corridor."
-    type: "traffic"
-    inject:
-      target_type: "lane"
-      target_id: "L_nagpur_hyderabad"
-      metric: "traffic_ratio"
-      value: 2.35
-    expected:
-      disruption_type: "traffic"
-      min_level: "high"
-      acceptable_actions: ["reroute"]
-
-  - id: "sc_03"
-    name: "Severe congestion Delhi to Jaipur"
-    description: "Peak rush hour gridlock exceeding 1.7x baseline duration on Delhi-Jaipur highway."
-    type: "traffic"
-    inject:
-      target_type: "lane"
-      target_id: "L_delhi_jaipur"
-      metric: "traffic_ratio"
-      value: 1.75
-    expected:
-      disruption_type: "traffic"
-      min_level: "medium"
-      acceptable_actions: ["reroute", "monitor"]
-
-  - id: "sc_04"
-    name: "Pune supplier delayed 48 hours"
-    description: "Core manufacturing supplier in Pune experiencing equipment breakdown causing 48h delay."
-    type: "supplier_delay"
-    inject:
-      target_type: "supplier"
-      target_id: "SUP_pune_01"
-      metric: "lead_time_delay_hours"
-      value: 48
-      z_score: 3.1
-    expected:
-      disruption_type: "supplier_delay"
-      min_level: "high"
-      acceptable_actions: ["alternate_supplier", "expedite"]
-
-  - id: "sc_05"
-    name: "Chennai supplier reliability drop"
-    description: "Chennai supplier on-time rate drops to 68% over past 7 days."
-    type: "supplier_delay"
-    inject:
-      target_type: "supplier"
-      target_id: "SUP_chennai_01"
-      metric: "on_time_rate"
-      value: 0.68
-      z_score: 1.85
-    expected:
-      disruption_type: "supplier_delay"
-      min_level: "medium"
-      acceptable_actions: ["alternate_supplier", "increase_safety_stock", "monitor"]
-
-  - id: "sc_06"
-    name: "Delhi warehouse inventory stockout imminent"
-    description: "Stock for high-velocity SKU-01 falls below 2 days of cover against 6-day lead time."
-    type: "inventory"
-    inject:
-      target_type: "location_sku"
-      target_id: "LOC_delhi_SKU01"
-      metric: "days_of_cover"
-      value: 1.8
-      effective_lead_time_days: 6.0
-    expected:
-      disruption_type: "inventory"
-      min_level: "high"
-      acceptable_actions: ["rebalance", "expedite"]
-
-  - id: "sc_07"
-    name: "Compound risk: Supplier delay and low stock"
-    description: "Supplier delay for SKU-03 hits store with only 3 days cover remaining."
-    type: "compound"
-    inject:
-      target_type: "compound"
-      supplier_id: "SUP_ludhiana_01"
-      location_sku_id: "LOC_delhi_SKU03"
-      delay_hours: 36
-      days_of_cover: 2.5
-    expected:
-      disruption_type: "compound"
-      min_level: "high"
-      acceptable_actions: ["rebalance", "alternate_supplier"]
-
-  - id: "sc_08"
-    name: "Corroborated weather and traffic on Surat-Ahmedabad"
-    description: "Intense rainstorm paired with traffic slowdown on Surat-Ahmedabad corridor."
-    type: "compound"
-    inject:
-      target_type: "lane"
-      target_id: "L_surat_ahmedabad"
-      weather_precip: 22.0
-      traffic_ratio: 1.6
-    expected:
-      disruption_type: "traffic"
-      min_level: "high"
-      acceptable_actions: ["reroute"]
-
-  - id: "sc_09"
-    name: "Tropical storm on Chennai-Bengaluru corridor"
-    description: "Heavy rain code 95 (thunderstorm) with winds over 95 km/h."
-    type: "weather"
-    inject:
-      target_type: "lane"
-      target_id: "L_chennai_bengaluru"
+      kind: "weather"
+      lane_id: "L_pune_delhi"
+      precip_mm: 35.0
+      gust_kmh: 85.0
       weather_code: 95
-      wind_gust_kmh: 98
-    expected:
-      disruption_type: "weather"
-      min_level: "high"
-      acceptable_actions: ["reroute", "monitor"]
 
-  - id: "sc_10"
-    name: "Port access congestion at Mumbai"
-    description: "Docks bottleneck creating 2.1x slowdown on Mumbai to Surat transit lane."
+  - id: "SCN_02"
+    name: "Highway Closure: Nagpur to Hyderabad"
+    description: "Major highway disruption and blockage between Nagpur and Hyderabad."
     type: "traffic"
+    entity_type: "lane"
+    entity_id: "L_nagpur_hyderabad"
+    severity_min: 0.8
+    expected_level: "high"
+    acceptable_actions: ["reroute", "monitor"]
     inject:
-      target_type: "lane"
-      target_id: "L_mumbai_surat"
-      metric: "traffic_ratio"
-      value: 2.1
-    expected:
-      disruption_type: "traffic"
-      min_level: "high"
-      acceptable_actions: ["reroute"]
+      kind: "traffic"
+      lane_id: "L_nagpur_hyderabad"
+      ratio: 2.2
 
-  - id: "sc_11"
-    name: "Surat packaging supplier plant maintenance"
-    description: "Surat supplier notifies 54-hour unplanned downtime."
+  - id: "SCN_03"
+    name: "Severe Congestion: Delhi to Jaipur"
+    description: "Gridlock and heavy peak hour traffic delay along NH48 Delhi NCR to Jaipur."
+    type: "traffic"
+    entity_type: "lane"
+    entity_id: "L_delhi_jaipur"
+    severity_min: 0.6
+    expected_level: "medium"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
+    inject:
+      kind: "traffic"
+      lane_id: "L_delhi_jaipur"
+      ratio: 1.65
+
+  - id: "SCN_04"
+    name: "Pune Supplier 48h Delay"
+    description: "Pune component manufacturing hub reports factory equipment breakdown and 48-hour delivery delay."
     type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-PUNE"
+    severity_min: 0.7
+    expected_level: "high"
+    acceptable_actions: ["alternate_supplier", "expedite", "monitor"]
     inject:
-      target_type: "supplier"
-      target_id: "SUP_surat_01"
-      metric: "lead_time_delay_hours"
-      value: 54
-    expected:
-      disruption_type: "supplier_delay"
-      min_level: "high"
-      acceptable_actions: ["alternate_supplier", "expedite"]
+      kind: "supplier"
+      supplier_id: "SUP-PUNE"
+      added_delay_hours: 48.0
 
-  - id: "sc_12"
-    name: "Bengaluru hub shortage of cold-chain SKU"
-    description: "High demand spike in South zone brings SKU-05 cover down to 1.5 days."
+  - id: "SCN_05"
+    name: "Chennai Supplier Reliability Drop"
+    description: "Chennai supplier delivery drift increases lead-time variance and lowers on-time performance."
+    type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-CHENNAI"
+    severity_min: 0.45
+    expected_level: "medium"
+    acceptable_actions: ["alternate_supplier", "expedite", "monitor"]
+    inject:
+      kind: "supplier"
+      supplier_id: "SUP-CHENNAI"
+      added_delay_hours: 36.0
+
+  - id: "SCN_06"
+    name: "Delhi Warehouse Stockout Risk"
+    description: "Delhi NCR central distribution hub inventory for fast-moving SKU-ELEC drops to 2 days of cover."
     type: "inventory"
+    entity_type: "location_sku"
+    entity_id: "delhi::SKU-ELEC"
+    severity_min: 0.65
+    expected_level: "high"
+    acceptable_actions: ["rebalance", "increase_safety_stock", "expedite", "monitor"]
     inject:
-      target_type: "location_sku"
-      target_id: "LOC_bengaluru_SKU05"
-      metric: "days_of_cover"
-      value: 1.5
-    expected:
-      disruption_type: "inventory"
-      min_level: "high"
-      acceptable_actions: ["rebalance", "expedite"]
+      kind: "inventory"
+      location_id: "delhi"
+      sku: "SKU-ELEC"
+      on_hand: 50.0
 
-  - id: "sc_13"
-    name: "Flash flood on Kolkata-Nagpur highway"
-    description: "Torrential downpours cause waterlogging on the national corridor."
-    type: "weather"
-    inject:
-      target_type: "lane"
-      target_id: "L_kolkata_nagpur"
-      metric: "precip_mm_per_h"
-      value: 32.0
-    expected:
-      disruption_type: "weather"
-      min_level: "high"
-      acceptable_actions: ["reroute"]
-
-  - id: "sc_14"
-    name: "Expressway multi-vehicle accident Ahmedabad-Mumbai"
-    description: "Complete shutdown for 4 hours, duration ratio jumps to 2.8x."
-    type: "traffic"
-    inject:
-      target_type: "lane"
-      target_id: "L_ahmedabad_mumbai"
-      metric: "traffic_ratio"
-      value: 2.8
-    expected:
-      disruption_type: "traffic"
-      min_level: "high"
-      acceptable_actions: ["reroute"]
-
-  - id: "sc_15"
-    name: "Ludhiana textile supplier quality recall"
-    description: "Shipments halted for reinspection, average delay +36h."
+  - id: "SCN_07"
+    name: "Compound Disruption: Supplier Delay & Low Stock"
+    description: "Ludhiana supplier delayed while Delhi hub on-hand cover is depleted, triggering corroboration."
     type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-LUDHIANA"
+    severity_min: 0.7
+    expected_level: "high"
+    acceptable_actions: ["alternate_supplier", "rebalance", "expedite", "increase_safety_stock", "monitor"]
     inject:
-      target_type: "supplier"
-      target_id: "SUP_ludhiana_01"
-      metric: "lead_time_delay_hours"
-      value: 36
-    expected:
-      disruption_type: "supplier_delay"
-      min_level: "medium"
-      acceptable_actions: ["alternate_supplier", "monitor"]
+      kind: "compound_supplier_inventory"
+      supplier_id: "SUP-LUDHIANA"
+      added_delay_hours: 48.0
+      location_id: "delhi"
+      sku: "SKU-FASH"
+      on_hand: 40.0
 
-  # Negative scenarios (5)
-  - id: "sc_16"
-    name: "Normal baseline operations"
-    description: "All signals within nominal historical boundaries across the network."
-    type: "baseline"
-    inject:
-      target_type: "network"
-      multiplier: 1.0
-    expected:
-      disruption_type: "none"
-      min_level: "low"
-      acceptable_actions: ["monitor"]
-
-  - id: "sc_17"
-    name: "Minor traffic bump on Delhi NCR bypass"
-    description: "Slight 1.1x traffic duration increase, well below 1.25x alert threshold."
+  - id: "SCN_08"
+    name: "Compound Corroboration: Storm & Traffic on Surat-Delhi Corridor"
+    description: "Both torrential downpour and multi-vehicle accident hit the Surat to Delhi corridor simultaneously."
     type: "traffic"
+    entity_type: "lane"
+    entity_id: "L_surat_delhi"
+    severity_min: 0.8
+    expected_level: "high"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
     inject:
-      target_type: "lane"
-      target_id: "L_delhi_jaipur"
-      metric: "traffic_ratio"
-      value: 1.12
-    expected:
-      disruption_type: "none"
-      min_level: "low"
-      acceptable_actions: ["monitor"]
+      kind: "compound_weather_traffic"
+      lane_id: "L_surat_delhi"
+      precip_mm: 28.0
+      ratio: 1.85
 
-  - id: "sc_18"
-    name: "Passing light shower in Bengaluru"
-    description: "Precipitation 3 mm/h (below 10 mm/h threshold), no high winds."
+  - id: "SCN_09"
+    name: "Severe Storm: Delhi to Lucknow"
+    description: "Severe thunderstorm with cyclonic winds along the Yamuna & Agra-Lucknow Expressway."
     type: "weather"
+    entity_type: "lane"
+    entity_id: "L_delhi_lucknow"
+    severity_min: 0.75
+    expected_level: "high"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
     inject:
-      target_type: "lane"
-      target_id: "L_bengaluru_chennai"
-      metric: "precip_mm_per_h"
-      value: 3.2
-    expected:
-      disruption_type: "none"
-      min_level: "low"
-      acceptable_actions: ["monitor"]
+      kind: "weather"
+      lane_id: "L_delhi_lucknow"
+      precip_mm: 32.0
+      gust_kmh: 92.0
+      weather_code: 96
 
-  - id: "sc_19"
-    name: "Supplier normal variation"
-    description: "Pune supplier delivery delayed by 2 hours, well within 1 standard deviation."
+  - id: "SCN_10"
+    name: "Traffic Gridlock: Bengaluru to Chennai"
+    description: "Industrial transit bottleneck and bridge repair on Bengaluru to Chennai corridor."
+    type: "traffic"
+    entity_type: "lane"
+    entity_id: "L_bengaluru_chennai"
+    severity_min: 0.65
+    expected_level: "high"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
+    inject:
+      kind: "traffic"
+      lane_id: "L_bengaluru_chennai"
+      ratio: 1.75
+
+  - id: "SCN_11"
+    name: "Ludhiana Supplier Raw Material Shortage"
+    description: "Ludhiana fabric mill encounters power outage causing 40-hour shipment postponement."
     type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-LUDHIANA"
+    severity_min: 0.6
+    expected_level: "high"
+    acceptable_actions: ["alternate_supplier", "expedite", "monitor"]
     inject:
-      target_type: "supplier"
-      target_id: "SUP_pune_01"
-      metric: "lead_time_delay_hours"
-      value: 2.0
-      z_score: 0.45
-    expected:
-      disruption_type: "none"
-      min_level: "low"
-      acceptable_actions: ["monitor"]
+      kind: "supplier"
+      supplier_id: "SUP-LUDHIANA"
+      added_delay_hours: 40.0
 
-  - id: "sc_20"
-    name: "Healthy inventory buffer"
-    description: "Stock is 14 days of cover against 7-day effective lead time."
+  - id: "SCN_12"
+    name: "Surat Supplier Dispatch Delay"
+    description: "Surat chemical supplier customs inspection hold adds 36 hours to scheduled dispatch."
+    type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-SURAT"
+    severity_min: 0.55
+    expected_level: "medium"
+    acceptable_actions: ["alternate_supplier", "expedite", "monitor"]
+    inject:
+      kind: "supplier"
+      supplier_id: "SUP-SURAT"
+      added_delay_hours: 36.0
+
+  - id: "SCN_13"
+    name: "Bengaluru Hub Stock Shortage SKU-PHMA"
+    description: "Surge demand at southern stores drains Bengaluru warehouse buffer to 1.5 days."
     type: "inventory"
+    entity_type: "location_sku"
+    entity_id: "bengaluru::SKU-PHMA"
+    severity_min: 0.7
+    expected_level: "high"
+    acceptable_actions: ["rebalance", "increase_safety_stock", "expedite", "monitor"]
     inject:
-      target_type: "location_sku"
-      target_id: "LOC_nagpur_SKU02"
-      metric: "days_of_cover"
-      value: 14.0
-      effective_lead_time_days: 7.0
-    expected:
-      disruption_type: "none"
-      min_level: "low"
-      acceptable_actions: ["monitor"]
+      kind: "inventory"
+      location_id: "bengaluru"
+      sku: "SKU-PHMA"
+      on_hand: 25.0
+
+  - id: "SCN_14"
+    name: "Mumbai Store Stockout SKU-AUTO"
+    description: "Retail surge empties Mumbai flagship store shelves for SKU-AUTO with 0 days of cover."
+    type: "inventory"
+    entity_type: "location_sku"
+    entity_id: "mumbai::SKU-AUTO"
+    severity_min: 0.85
+    expected_level: "high"
+    acceptable_actions: ["rebalance", "increase_safety_stock", "expedite", "monitor"]
+    inject:
+      kind: "inventory"
+      location_id: "mumbai"
+      sku: "SKU-AUTO"
+      on_hand: 2.0
+
+  - id: "SCN_15"
+    name: "Monsoon Flood: Pune to Bengaluru"
+    description: "Highway waterlogging on NH48 between Pune and Bengaluru halting freight carriers."
+    type: "weather"
+    entity_type: "lane"
+    entity_id: "L_pune_bengaluru"
+    severity_min: 0.8
+    expected_level: "high"
+    acceptable_actions: ["reroute", "expedite", "monitor"]
+    inject:
+      kind: "weather"
+      lane_id: "L_pune_bengaluru"
+      precip_mm: 42.0
+      gust_kmh: 80.0
+      weather_code: 95
+
+  # ── Negative Scenarios (Expected: No High Disruption / Monitor) ─────────────
+  - id: "SCN_NEG_01"
+    name: "Normal Operations (Baseline)"
+    description: "Nominal weather and traffic conditions across the entire Indian freight corridor."
+    type: "none"
+    entity_type: "none"
+    entity_id: "none"
+    severity_min: 0.0
+    expected_level: "low"
+    acceptable_actions: ["monitor"]
+    inject:
+      kind: "baseline"
+
+  - id: "SCN_NEG_02"
+    name: "Minor Traffic Bump"
+    description: "Slight 10% traffic slowdown on Delhi to Jaipur corridor, well below disruption threshold."
+    type: "traffic"
+    entity_type: "lane"
+    entity_id: "L_delhi_jaipur"
+    severity_min: 0.0
+    expected_level: "low"
+    acceptable_actions: ["monitor"]
+    inject:
+      kind: "traffic"
+      lane_id: "L_delhi_jaipur"
+      ratio: 1.10
+
+  - id: "SCN_NEG_03"
+    name: "Light Rain on Delhi to Jaipur"
+    description: "Mild 2 mm/h precipitation on Delhi-Jaipur highway, negligible impact on transit times."
+    type: "weather"
+    entity_type: "lane"
+    entity_id: "L_delhi_jaipur"
+    severity_min: 0.0
+    expected_level: "low"
+    acceptable_actions: ["monitor"]
+    inject:
+      kind: "weather"
+      lane_id: "L_delhi_jaipur"
+      precip_mm: 2.0
+      gust_kmh: 15.0
+      weather_code: 51
+
+  - id: "SCN_NEG_04"
+    name: "Normal Supplier Variance"
+    description: "Minor 1-hour delivery variance for Pune supplier, within standard tolerance window."
+    type: "supplier_delay"
+    entity_type: "supplier"
+    entity_id: "SUP-PUNE"
+    severity_min: 0.0
+    expected_level: "low"
+    acceptable_actions: ["monitor"]
+    inject:
+      kind: "supplier"
+      supplier_id: "SUP-PUNE"
+      added_delay_hours: 1.0
+
+  - id: "SCN_NEG_05"
+    name: "Adequate Safety Stock"
+    description: "Stock is slightly below maximum target but well above replenishment lead-time cover."
+    type: "inventory"
+    entity_type: "location_sku"
+    entity_id: "delhi::SKU-ELEC"
+    severity_min: 0.0
+    expected_level: "low"
+    acceptable_actions: ["monitor"]
+    inject:
+      kind: "inventory"
+      location_id: "delhi"
+      sku: "SKU-ELEC"
+      on_hand: 550.0
