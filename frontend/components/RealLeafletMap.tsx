@@ -643,7 +643,12 @@ export default function RealLeafletMap({
     return () => {
       isMounted = false;
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.stop();
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore unmount transition race condition
+        }
         mapInstanceRef.current = null;
       }
     };

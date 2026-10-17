@@ -57,20 +57,32 @@ export default function RealLeafletRouteCompareMap({
 }: RealLeafletRouteCompareMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const layersGroupRef = useRef<any>(null);
+  const leafletLibRef = useRef<any>(null);
 
+  // 1. Initialize Map once on mount
   useEffect(() => {
     if (!mapContainerRef.current) return;
     let isMounted = true;
 
     async function init() {
       const L = (await import('leaflet')).default;
+      if (!isMounted || !mapContainerRef.current) return;
 
+      leafletLibRef.current = L;
+
+      // Clean up previous instance if any
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.stop();
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore teardown race condition
+        }
         mapInstanceRef.current = null;
       }
 
-      if (!isMounted || !mapContainerRef.current) return;
+      if (!mapContainerRef.current) return;
 
       const map = L.map(mapContainerRef.current, {
         center: [23.5, 76.0],
@@ -80,7 +92,7 @@ export default function RealLeafletRouteCompareMap({
       });
       mapInstanceRef.current = map;
 
-      // Free Clean GIS Canvas tiles (NO API key, NO watermarks)
+      // Clean GIS Canvas tiles
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
         {
@@ -96,116 +108,11 @@ export default function RealLeafletRouteCompareMap({
         }
       ).addTo(map);
 
-      const paths = routeCorridors.default;
+      // Create a persistent layerGroup for routes and markers
+      layersGroupRef.current = L.layerGroup().addTo(map);
 
-      // 1. Current Impaired Route (Red, dashed, warning)
-      L.polyline(paths.current, {
-        color: '#DC2626',
-        weight: 7,
-        opacity: 0.25,
-        lineCap: 'round',
-      }).addTo(map);
-
-      const currentPolyline = L.polyline(paths.current, {
-        color: '#DC2626',
-        weight: 4,
-        opacity: 0.9,
-        dashArray: '8, 8',
-        lineCap: 'round',
-      }).addTo(map);
-
-      currentPolyline.bindPopup(`
-        <div style="font-family: Inter, sans-serif; padding: 4px;">
-          <div style="font-weight: 800; color: #991B1B; font-size: 12px;">Current Impaired Path</div>
-          <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Via NH 48 Coastal Belt • Heavy Delay (+6h)</div>
-          <div style="font-weight: 700; color: #DC2626; font-size: 11px; margin-top: 4px;">Risk: 86 / 100 (High)</div>
-        </div>
-      `);
-
-      // 2. Alternative 1 (Recommended Bypass - Emerald)
-      const isAlt1Selected = selectedAltIndex === 0;
-      L.polyline(paths.alt1, {
-        color: '#16A34A',
-        weight: isAlt1Selected ? 8 : 4,
-        opacity: isAlt1Selected ? 0.35 : 0.15,
-        lineCap: 'round',
-      }).addTo(map);
-
-      const alt1Polyline = L.polyline(paths.alt1, {
-        color: '#16A34A',
-        weight: isAlt1Selected ? 5 : 3,
-        opacity: isAlt1Selected ? 1 : 0.6,
-        lineCap: 'round',
-      }).addTo(map);
-
-      alt1Polyline.bindPopup(`
-        <div style="font-family: Inter, sans-serif; padding: 4px;">
-          <div style="font-weight: 800; color: #166534; font-size: 12px;">Candidate 1: Central Bypass Corridor</div>
-          <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Avoids flood zone • Saves 52h • +3.8% cost</div>
-          <div style="font-weight: 700; color: #16A34A; font-size: 11px; margin-top: 4px;">Risk: 28 / 100 (Optimal)</div>
-        </div>
-      `);
-
-      // 3. Alternative 2 (Expedited Route - Amber)
-      const isAlt2Selected = selectedAltIndex === 1;
-      L.polyline(paths.alt2, {
-        color: '#D97706',
-        weight: isAlt2Selected ? 8 : 4,
-        opacity: isAlt2Selected ? 0.35 : 0.15,
-        lineCap: 'round',
-      }).addTo(map);
-
-      const alt2Polyline = L.polyline(paths.alt2, {
-        color: '#D97706',
-        weight: isAlt2Selected ? 5 : 3,
-        opacity: isAlt2Selected ? 1 : 0.5,
-        dashArray: '5, 5',
-        lineCap: 'round',
-      }).addTo(map);
-
-      // Markers for Origin & Destination
-      const originCoord = paths.current[0];
-      const destCoord = paths.current[paths.current.length - 1];
-
-      // Origin Pin
-      const originHtml = `
-        <div style="display: flex; align-items: center; justify-content: center;">
-          <div style="width: 18px; height: 18px; border-radius: 50%; background: #2A2724; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
-          <div style="position: absolute; top: -20px; left: 16px; background: #FFFFFF; padding: 2px 7px; border-radius: 6px; border: 1px solid #E8E2D6; box-shadow: 0 2px 5px rgba(0,0,0,0.08); font-family: Inter, sans-serif; font-weight: bold; font-size: 11px; color: #191816; white-space: nowrap;">
-            Origin: ${originCity}
-          </div>
-        </div>
-      `;
-      L.marker(originCoord, {
-        icon: L.divIcon({ html: originHtml, className: 'origin-marker', iconSize: [18, 18], iconAnchor: [9, 9] }),
-      }).addTo(map);
-
-      // Destination Pin
-      const destHtml = `
-        <div style="display: flex; align-items: center; justify-content: center;">
-          <div style="width: 18px; height: 18px; border-radius: 50%; background: #16A34A; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
-          <div style="position: absolute; top: -20px; left: 16px; background: #FFFFFF; padding: 2px 7px; border-radius: 6px; border: 1px solid #E8E2D6; box-shadow: 0 2px 5px rgba(0,0,0,0.08); font-family: Inter, sans-serif; font-weight: bold; font-size: 11px; color: #191816; white-space: nowrap;">
-            Destination: ${destinationCity}
-          </div>
-        </div>
-      `;
-      L.marker(destCoord, {
-        icon: L.divIcon({ html: destHtml, className: 'dest-marker', iconSize: [18, 18], iconAnchor: [9, 9] }),
-      }).addTo(map);
-
-      // Warning Badge on blocked lane (near Surat / Mumbai coast)
-      const warningHtml = `
-        <div style="background: #FDEBEB; border: 1px solid #F8B4B4; border-radius: 8px; padding: 3px 8px; box-shadow: 0 2px 8px rgba(220,38,38,0.25); display: flex; align-items: center; gap: 5px; font-family: Inter, sans-serif; font-size: 10px; font-weight: bold; color: #991B1B;">
-          <span>⚠ Blocked Lane</span>
-        </div>
-      `;
-      L.marker([20.4, 72.9], {
-        icon: L.divIcon({ html: warningHtml, className: 'blocked-warning', iconSize: [100, 24], iconAnchor: [50, 12] }),
-      }).addTo(map);
-
-      // Fit bounds to display both routes clearly
-      const bounds = L.latLngBounds([...paths.current, ...paths.alt1]);
-      map.fitBounds(bounds, { padding: [40, 40] });
+      // Render initial routes
+      renderRoutes();
     }
 
     init();
@@ -213,10 +120,152 @@ export default function RealLeafletRouteCompareMap({
     return () => {
       isMounted = false;
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.stop();
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore
+        }
         mapInstanceRef.current = null;
+        layersGroupRef.current = null;
       }
     };
+  }, []);
+
+  // 2. Re-render polylines and markers when selection changes (without destroying the map!)
+  const renderRoutes = () => {
+    const map = mapInstanceRef.current;
+    const group = layersGroupRef.current;
+    const L = leafletLibRef.current;
+
+    if (!map || !group || !L) return;
+
+    group.clearLayers();
+
+    const paths = routeCorridors.default;
+
+    // 1. Current Impaired Route (Red, dashed, warning)
+    L.polyline(paths.current, {
+      color: '#DC2626',
+      weight: 7,
+      opacity: 0.25,
+      lineCap: 'round',
+    }).addTo(group);
+
+    const currentPolyline = L.polyline(paths.current, {
+      color: '#DC2626',
+      weight: 4,
+      opacity: 0.9,
+      dashArray: '8, 8',
+      lineCap: 'round',
+    }).addTo(group);
+
+    currentPolyline.bindPopup(`
+      <div style="font-family: Inter, sans-serif; padding: 4px;">
+        <div style="font-weight: 800; color: #991B1B; font-size: 12px;">Current Impaired Path</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Via NH 48 Coastal Belt • Heavy Delay (+6h)</div>
+        <div style="font-weight: 700; color: #DC2626; font-size: 11px; margin-top: 4px;">Risk: 86 / 100 (High)</div>
+      </div>
+    `);
+
+    // 2. Alternative 1 (Recommended Bypass - Emerald)
+    const isAlt1Selected = selectedAltIndex === 0;
+    L.polyline(paths.alt1, {
+      color: '#16A34A',
+      weight: isAlt1Selected ? 8 : 4,
+      opacity: isAlt1Selected ? 0.35 : 0.15,
+      lineCap: 'round',
+    }).addTo(group);
+
+    const alt1Polyline = L.polyline(paths.alt1, {
+      color: '#16A34A',
+      weight: isAlt1Selected ? 5 : 3,
+      opacity: isAlt1Selected ? 1 : 0.6,
+      lineCap: 'round',
+    }).addTo(group);
+
+    alt1Polyline.bindPopup(`
+      <div style="font-family: Inter, sans-serif; padding: 4px;">
+        <div style="font-weight: 800; color: #166534; font-size: 12px;">Candidate 1: Central Bypass Corridor</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Avoids flood zone • Saves 52h • +3.8% cost</div>
+        <div style="font-weight: 700; color: #16A34A; font-size: 11px; margin-top: 4px;">Risk: 28 / 100 (Optimal)</div>
+      </div>
+    `);
+
+    // 3. Alternative 2 (Expedited Route - Amber)
+    const isAlt2Selected = selectedAltIndex === 1;
+    L.polyline(paths.alt2, {
+      color: '#D97706',
+      weight: isAlt2Selected ? 8 : 4,
+      opacity: isAlt2Selected ? 0.35 : 0.15,
+      lineCap: 'round',
+    }).addTo(group);
+
+    const alt2Polyline = L.polyline(paths.alt2, {
+      color: '#D97706',
+      weight: isAlt2Selected ? 5 : 3,
+      opacity: isAlt2Selected ? 1 : 0.6,
+      lineCap: 'round',
+    }).addTo(group);
+
+    alt2Polyline.bindPopup(`
+      <div style="font-family: Inter, sans-serif; padding: 4px;">
+        <div style="font-weight: 800; color: #B45309; font-size: 12px;">Candidate 2: Direct Corridor</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Fastest transit • Higher toll rates (+8.2%)</div>
+        <div style="font-weight: 700; color: #D97706; font-size: 11px; margin-top: 4px;">Risk: 34 / 100</div>
+      </div>
+    `);
+
+    // Origin Pin
+    const originCoord = paths.current[0];
+    const destCoord = paths.current[paths.current.length - 1];
+
+    const originHtml = `
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <div style="width: 18px; height: 18px; border-radius: 50%; background: #2563EB; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
+        <div style="position: absolute; top: -20px; left: 16px; background: #FFFFFF; padding: 2px 7px; border-radius: 6px; border: 1px solid #E8E2D6; box-shadow: 0 2px 5px rgba(0,0,0,0.08); font-family: Inter, sans-serif; font-weight: bold; font-size: 11px; color: #191816; white-space: nowrap;">
+          Origin: ${originCity}
+        </div>
+      </div>
+    `;
+    L.marker(originCoord, {
+      icon: L.divIcon({ html: originHtml, className: 'origin-marker', iconSize: [18, 18], iconAnchor: [9, 9] }),
+    }).addTo(group);
+
+    // Destination Pin
+    const destHtml = `
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <div style="width: 18px; height: 18px; border-radius: 50%; background: #16A34A; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
+        <div style="position: absolute; top: -20px; left: 16px; background: #FFFFFF; padding: 2px 7px; border-radius: 6px; border: 1px solid #E8E2D6; box-shadow: 0 2px 5px rgba(0,0,0,0.08); font-family: Inter, sans-serif; font-weight: bold; font-size: 11px; color: #191816; white-space: nowrap;">
+          Destination: ${destinationCity}
+        </div>
+      </div>
+    `;
+    L.marker(destCoord, {
+      icon: L.divIcon({ html: destHtml, className: 'dest-marker', iconSize: [18, 18], iconAnchor: [9, 9] }),
+    }).addTo(group);
+
+    // Warning Badge on blocked lane
+    const warningHtml = `
+      <div style="background: #FDEBEB; border: 1px solid #F8B4B4; border-radius: 8px; padding: 3px 8px; box-shadow: 0 2px 8px rgba(220,38,38,0.25); display: flex; align-items: center; gap: 5px; font-family: Inter, sans-serif; font-size: 10px; font-weight: bold; color: #991B1B;">
+        <span>⚠ Blocked Lane</span>
+      </div>
+    `;
+    L.marker([20.4, 72.9], {
+      icon: L.divIcon({ html: warningHtml, className: 'blocked-warning', iconSize: [100, 24], iconAnchor: [50, 12] }),
+    }).addTo(group);
+
+    // Fit bounds with animate: false to completely avoid zoom transition race condition
+    try {
+      const bounds = L.latLngBounds([...paths.current, ...paths.alt1]);
+      map.fitBounds(bounds, { padding: [40, 40], animate: false });
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    renderRoutes();
   }, [selectedAltIndex, originCity, destinationCity]);
 
   return (
