@@ -1,288 +1,55 @@
 {
   "kpis": {
-    "total_active_risks": 12,
-    "high_severity_count": 4,
-    "total_shipments_at_risk": 6,
-    "total_revenue_at_risk": 485000,
-    "on_time_network_rate": 87.5
+    "active_disruptions": 0,
+    "high_risk_shipments": 0,
+    "revenue_at_risk": 0.0,
+    "avg_delay_h": 0.0,
+    "total_active_risks": 0,
+    "high_severity_count": 0,
+    "total_shipments_at_risk": 0,
+    "total_revenue_at_risk": 0.0,
+    "on_time_network_rate": 77.5
+  },
+  "risk_by_cause": {
+    "weather": 0,
+    "traffic": 0,
+    "supplier_delay": 0,
+    "inventory": 0,
+    "inventory_shortage": 0,
+    "geopolitical": 0
   },
   "active_risks_by_cause": {
-    "supplier_delay": 4,
-    "weather": 3,
-    "traffic": 2,
-    "inventory_shortage": 2,
-    "geopolitical": 1
+    "weather": 0,
+    "traffic": 0,
+    "supplier_delay": 0,
+    "inventory_shortage": 0,
+    "geopolitical": 0
   },
+  "top_risky_lanes": [],
   "regional_risk_levels": [
-    { "region": "North America", "level": "medium", "score": 48 },
-    { "region": "Europe", "level": "high", "score": 76 },
-    { "region": "Asia", "level": "high", "score": 84 },
-    { "region": "South America", "level": "medium", "score": 52 },
-    { "region": "Africa", "level": "low", "score": 24 }
-  ],
-  "recent_disruptions": [
     {
-      "id": "d_101",
-      "type": "supplier_delay",
-      "entity": {
-        "type": "supplier",
-        "id": "SUP_shenzhen_01",
-        "name": "Shenzhen Precision Electronics",
-        "location_label": "Shenzhen, China"
-      },
-      "severity": 0.88,
-      "confidence": 0.82,
-      "risk_score": 86,
-      "level": "high",
-      "status": "open",
-      "detected_at": "2026-10-17T12:30:00Z",
-      "time_ago": "2 hrs ago",
-      "issue_title": "Supplier delay",
-      "impact_summary": "Component shortage",
-      "impact": {
-        "affected_shipments": ["S-104", "S-109"],
-        "extra_delay_h": 48.0,
-        "stockout_date": "2026-10-21",
-        "units_short": 420,
-        "revenue_at_risk": 185000
-      },
-      "evidence": [
-        {
-          "source": "supplier-telemetry",
-          "simulated": true,
-          "metric": "lead_time_z_score",
-          "value": 3.2,
-          "unit": "z",
-          "ts": "2026-10-17T12:25:00Z"
-        }
-      ]
-    },
-    {
-      "id": "d_102",
-      "type": "weather",
-      "entity": {
-        "type": "lane",
-        "id": "L_rotterdam_shanghai",
-        "name": "Rotterdam Marine & Port Terminal",
-        "location_label": "Rotterdam, NL"
-      },
-      "severity": 0.82,
-      "confidence": 0.90,
-      "risk_score": 78,
-      "level": "high",
-      "status": "open",
-      "detected_at": "2026-10-17T10:30:00Z",
-      "time_ago": "4 hrs ago",
-      "issue_title": "Severe weather",
-      "impact_summary": "Port congestion",
-      "impact": {
-        "affected_shipments": ["S-101", "S-105"],
-        "extra_delay_h": 36.0,
-        "stockout_date": "2026-10-24",
-        "units_short": 280,
-        "revenue_at_risk": 140000
-      },
-      "evidence": [
-        {
-          "source": "open-meteo",
-          "simulated": false,
-          "metric": "wind_gust_kmh",
-          "value": 88.5,
-          "unit": "km/h",
-          "ts": "2026-10-17T10:15:00Z"
-        }
-      ]
-    },
-    {
-      "id": "d_103",
-      "type": "traffic",
-      "entity": {
-        "type": "lane",
-        "id": "L_ny_interstate",
-        "name": "I-95 Port Corridor New York",
-        "location_label": "New York, USA"
-      },
-      "severity": 0.58,
-      "confidence": 0.75,
-      "risk_score": 54,
+      "region": "North India",
       "level": "medium",
-      "status": "open",
-      "detected_at": "2026-10-17T08:30:00Z",
-      "time_ago": "6 hrs ago",
-      "issue_title": "Traffic disruption",
-      "impact_summary": "Delayed delivery",
-      "impact": {
-        "affected_shipments": ["S-112"],
-        "extra_delay_h": 8.5,
-        "stockout_date": "2026-10-26",
-        "units_short": 110,
-        "revenue_at_risk": 52000
-      },
-      "evidence": [
-        {
-          "source": "traffic-sensor",
-          "simulated": true,
-          "metric": "duration_ratio",
-          "value": 1.62,
-          "unit": "x",
-          "ts": "2026-10-17T08:20:00Z"
-        }
-      ]
+      "score": 45
     },
     {
-      "id": "d_104",
-      "type": "traffic",
-      "entity": {
-        "type": "lane",
-        "id": "L_santos_dock",
-        "name": "Santos Port Gate Terminal",
-        "location_label": "Santos, Brazil"
-      },
-      "severity": 0.52,
-      "confidence": 0.68,
-      "risk_score": 49,
+      "region": "West India",
       "level": "medium",
-      "status": "open",
-      "detected_at": "2026-10-17T05:30:00Z",
-      "time_ago": "9 hrs ago",
-      "issue_title": "Customs delay",
-      "impact_summary": "1-2 days delay",
-      "impact": {
-        "affected_shipments": ["S-115"],
-        "extra_delay_h": 28.0,
-        "stockout_date": "2026-10-28",
-        "units_short": 95,
-        "revenue_at_risk": 44000
-      },
-      "evidence": [
-        {
-          "source": "customs-feed",
-          "simulated": true,
-          "metric": "clearance_backlog_hours",
-          "value": 31.0,
-          "unit": "hours",
-          "ts": "2026-10-17T05:15:00Z"
-        }
-      ]
+      "score": 68
     },
     {
-      "id": "d_105",
-      "type": "inventory",
-      "entity": {
-        "type": "location_sku",
-        "id": "LOC_singapore_SKU04",
-        "name": "Singapore Distribution Hub - SKU04",
-        "location_label": "Singapore"
-      },
-      "severity": 0.32,
-      "confidence": 0.94,
-      "risk_score": 28,
+      "region": "South India",
+      "level": "medium",
+      "score": 38
+    },
+    {
+      "region": "Central India",
       "level": "low",
-      "status": "open",
-      "detected_at": "2026-10-17T02:30:00Z",
-      "time_ago": "12 hrs ago",
-      "issue_title": "Inventory shortage",
-      "impact_summary": "Production at risk",
-      "impact": {
-        "affected_shipments": ["S-120"],
-        "extra_delay_h": 0.0,
-        "stockout_date": "2026-10-29",
-        "units_short": 60,
-        "revenue_at_risk": 24000
-      },
-      "evidence": [
-        {
-          "source": "wms-inventory",
-          "simulated": true,
-          "metric": "days_of_cover",
-          "value": 4.1,
-          "unit": "days",
-          "ts": "2026-10-17T02:15:00Z"
-        }
-      ]
+      "score": 25
     }
   ],
-  "recommended_actions": [
-    {
-      "id": "r_501",
-      "disruption_id": "d_101",
-      "rank": 1,
-      "action_type": "reroute",
-      "title": "Reroute via Singapore",
-      "explanation": "Avoid congestion at Shenzhen. Estimated delay reduction: 2-3 days.",
-      "delay_saved_h": 52.0,
-      "cost_delta_pct": 3.8,
-      "risk_reduction": 58,
-      "confidence": 0.84,
-      "status": "proposed",
-      "params": {
-        "shipment_id": "S-104",
-        "new_waypoint": "Singapore Transshipment Center"
-      },
-      "evidence": [
-        {
-          "source": "graph-router",
-          "simulated": true,
-          "metric": "delay_reduction_days",
-          "value": 2.5,
-          "unit": "days",
-          "ts": "2026-10-17T12:31:00Z"
-        }
-      ]
-    },
-    {
-      "id": "r_502",
-      "disruption_id": "d_101",
-      "rank": 2,
-      "action_type": "alternate_supplier",
-      "title": "Activate alternate supplier",
-      "explanation": "Component stock below threshold. Switch to qualified supplier in Vietnam.",
-      "delay_saved_h": 40.0,
-      "cost_delta_pct": 5.2,
-      "risk_reduction": 44,
-      "confidence": 0.80,
-      "status": "proposed",
-      "params": {
-        "new_supplier_id": "SUP_vietnam_02",
-        "reallocated_units": 420
-      },
-      "evidence": [
-        {
-          "source": "supplier-index",
-          "simulated": true,
-          "metric": "supplier_lead_time_days",
-          "value": 3.0,
-          "unit": "days",
-          "ts": "2026-10-17T12:31:00Z"
-        }
-      ]
-    },
-    {
-      "id": "r_503",
-      "disruption_id": "d_102",
-      "rank": 3,
-      "action_type": "increase_safety_stock",
-      "title": "Increase safety stock",
-      "explanation": "Weather disruption may delay replenishment. Increase stock by 2 weeks.",
-      "delay_saved_h": 0.0,
-      "cost_delta_pct": 2.1,
-      "risk_reduction": 36,
-      "confidence": 0.76,
-      "status": "proposed",
-      "params": {
-        "target_location": "Rotterdam Hub",
-        "additional_buffer_days": 14
-      },
-      "evidence": [
-        {
-          "source": "inventory-planner",
-          "simulated": true,
-          "metric": "holding_cost_delta_pct",
-          "value": 2.1,
-          "unit": "%",
-          "ts": "2026-10-17T10:32:00Z"
-        }
-      ]
-    }
-  ]
+  "recent_disruptions": [],
+  "top_recommendations": [],
+  "recommended_actions": [],
+  "network_status": "operational"
 }

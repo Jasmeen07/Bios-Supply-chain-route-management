@@ -1,7 +1,12 @@
 {
   "success": true,
-  "scenario_id": "sc_01",
-  "injected_disruption_id": "d_101",
-  "description": "Heavy rain and storm on Mumbai-Pune corridor injected into simulation network.",
-  "status": "active"
+  "scenario_id": "SCN_02",
+  "description": "Major highway disruption and blockage between Nagpur and Hyderabad.",
+  "disruptions_created": 0,
+  "disruption_ids": [
+    "d_6cae8b9c"
+  ],
+  "injected_disruption_id": "d_6cae8b9c",
+  "status": "active",
+  "message": "Scenario 'SCN_02' injected successfully. 0 new disruptions detected."
 }

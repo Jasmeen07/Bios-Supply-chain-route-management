@@ -1,567 +1,1198 @@
 openapi: 3.1.0
 info:
-  title: SupplySense Decision-Support API
-  description: Supply chain disruption detection, impact analysis, and route optimization API.
+  title: SupplySense API
+  description: Intelligent Supply-Chain Risk and Route Management Decision-Support
+    Platform
   version: 1.0.0
-servers:
-  - url: http://localhost:8000/api
-    description: Local development backend
-
 paths:
-  /health:
+  /api/health:
     get:
-      summary: Health check
-      operationId: getHealth
+      tags:
+      - Overview
+      summary: Health
+      operationId: health_api_health_get
       responses:
         '200':
-          description: Service is healthy
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-
-  /overview:
+                $ref: '#/components/schemas/HealthOut'
+  /api/overview:
     get:
-      summary: Dashboard overview metrics and top items
-      operationId: getOverview
+      tags:
+      - Overview
+      summary: Overview
+      operationId: overview_api_overview_get
       responses:
         '200':
-          description: Overview metrics payload
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OverviewResponse'
-
-  /network:
+                $ref: '#/components/schemas/OverviewOut'
+  /api/network:
     get:
-      summary: Network topology including nodes, lanes, geometries, and current risks
-      operationId: getNetwork
+      tags:
+      - Network
+      summary: Get Network
+      operationId: get_network_api_network_get
       responses:
         '200':
-          description: Network graph topology
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NetworkResponse'
-
-  /disruptions:
+                $ref: '#/components/schemas/NetworkOut'
+  /api/disruptions:
     get:
-      summary: List disruptions with optional status and type filters
-      operationId: listDisruptions
+      tags:
+      - Disruptions
+      summary: List Disruptions
+      operationId: list_disruptions_api_disruptions_get
       parameters:
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [open, resolved, all]
-            default: open
-        - name: type
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [weather, traffic, supplier_delay, inventory]
-        - name: level
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [low, medium, high]
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by status (open, resolved)
+          title: Status
+        description: Filter by status (open, resolved)
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by type (weather, traffic, supplier_delay, inventory)
+          title: Type
+        description: Filter by type (weather, traffic, supplier_delay, inventory)
+      - name: level
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by risk level (low, medium, high)
+          title: Level
+        description: Filter by risk level (low, medium, high)
       responses:
         '200':
-          description: List of disruptions
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Disruption'
-
-  /disruptions/{id}:
-    get:
-      summary: Get disruption details including impact, evidence, and recommendations
-      operationId: getDisruption
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Disruption detail
+                  $ref: '#/components/schemas/DisruptionOut'
+                title: Response List Disruptions Api Disruptions Get
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DisruptionDetail'
-        '404':
-          description: Disruption not found
-
-  /shipments:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/disruptions/{disruption_id}:
     get:
-      summary: List all active and planned shipments
-      operationId: listShipments
+      tags:
+      - Disruptions
+      summary: Get Disruption
+      operationId: get_disruption_api_disruptions__disruption_id__get
+      parameters:
+      - name: disruption_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Disruption Id
       responses:
         '200':
-          description: List of shipments
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisruptionOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/shipments:
+    get:
+      tags:
+      - Shipments
+      summary: List Shipments
+      operationId: list_shipments_api_shipments_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ShipmentOut'
+                type: array
+                title: Response List Shipments Api Shipments Get
+  /api/suppliers:
+    get:
+      tags:
+      - Suppliers
+      summary: List Suppliers
+      operationId: list_suppliers_api_suppliers_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SupplierOut'
+                type: array
+                title: Response List Suppliers Api Suppliers Get
+  /api/routes/compare:
+    get:
+      tags:
+      - Routes
+      summary: Compare Routes
+      operationId: compare_routes_api_routes_compare_get
+      parameters:
+      - name: shipment_id
+        in: query
+        required: true
+        schema:
+          type: string
+          description: ID of shipment to compare routes for
+          title: Shipment Id
+        description: ID of shipment to compare routes for
+      - name: priority
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Optimization priority: fastest, balanced, cheapest, safest'
+          default: balanced
+          title: Priority
+        description: 'Optimization priority: fastest, balanced, cheapest, safest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteCompareOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/recommendations:
+    get:
+      tags:
+      - Recommendations
+      summary: List Recommendations
+      operationId: list_recommendations_api_recommendations_get
+      parameters:
+      - name: disruption_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by disruption ID
+          title: Disruption Id
+        description: Filter by disruption ID
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Shipment'
-
-  /suppliers:
-    get:
-      summary: List suppliers with performance statistics
-      operationId: listSuppliers
-      responses:
-        '200':
-          description: List of suppliers
+                  $ref: '#/components/schemas/RecommendationOut'
+                title: Response List Recommendations Api Recommendations Get
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Supplier'
-
-  /routes/compare:
-    get:
-      summary: Compare current route against alternatives for a shipment
-      operationId: compareRoutes
-      parameters:
-        - name: shipment_id
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: priority
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [fastest, balanced, cheapest, safest]
-            default: balanced
-      responses:
-        '200':
-          description: Comparison between current route and candidates
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RouteCompare'
-
-  /recommendations:
-    get:
-      summary: List recommendations optionally filtered by disruption
-      operationId: listRecommendations
-      parameters:
-        - name: disruption_id
-          in: query
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of recommendations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Recommendation'
-
-  /recommendations/{id}/approve:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/recommendations/{recommendation_id}/approve:
     post:
-      summary: Approve and apply a recommended action
-      operationId: approveRecommendation
+      tags:
+      - Recommendations
+      summary: Approve Recommendation
+      operationId: approve_recommendation_api_recommendations__recommendation_id__approve_post
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: recommendation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Recommendation Id
       responses:
         '200':
-          description: Action applied successfully
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApproveResult'
-
-  /detect/run:
-    post:
-      summary: Trigger a manual detection engine cycle
-      operationId: runDetection
-      responses:
-        '200':
-          description: Detection cycle results
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DetectionRunResult'
-
-  /simulate:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/detect/run:
     post:
-      summary: Inject a scenario or custom disturbance into the simulation
-      operationId: simulateScenario
+      tags:
+      - Detection
+      summary: Trigger Detection
+      description: 'Manually triggers a full detection cycle across all 4 rules:
+
+        weather, traffic, supplier delay, inventory shortage.'
+      operationId: trigger_detection_api_detect_run_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/simulate:
+    post:
+      tags:
+      - Simulate
+      summary: Simulate
+      description: Inject a disruption scenario (either by scenario_id or custom payload).
+      operationId: simulate_api_simulate_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SimulateRequest'
+        required: true
       responses:
         '200':
-          description: Scenario injected successfully
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulateResult'
-
-  /simulate/reset:
-    post:
-      summary: Reset simulator to original seeded state
-      operationId: resetSimulation
-      responses:
-        '200':
-          description: Simulation reset confirmation
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResetResult'
-
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/simulate/reset:
+    post:
+      tags:
+      - Simulate
+      summary: Reset
+      description: Reset all simulation incidents and restore baseline seed network
+        state.
+      operationId: reset_api_simulate_reset_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/simulate/scenarios:
+    get:
+      tags:
+      - Simulate
+      summary: List Scenarios
+      description: Returns all registered scenarios for the frontend Simulator drawer.
+      operationId: list_scenarios_api_simulate_scenarios_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response List Scenarios Api Simulate Scenarios Get
 components:
   schemas:
-    HealthResponse:
+    ApproveResult:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+        recommendation_id:
+          type: string
+          title: Recommendation Id
+        disruption_id:
+          type: string
+          title: Disruption Id
+        action_type:
+          type: string
+          title: Action Type
+        before_risk_score:
+          type: number
+          title: Before Risk Score
+        after_risk_score:
+          type: number
+          title: After Risk Score
+        message:
+          type: string
+          title: Message
+        applied_at:
+          type: string
+          title: Applied At
+          default: ''
+        applied:
+          type: boolean
+          title: Applied
+          default: true
       type: object
-      required: [status, timestamp, version, database, providers]
+      required:
+      - recommendation_id
+      - disruption_id
+      - action_type
+      - before_risk_score
+      - after_risk_score
+      - message
+      title: ApproveResult
+    DisruptionOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        type:
+          type: string
+          title: Type
+        entity:
+          $ref: '#/components/schemas/EntityRef'
+        severity:
+          type: number
+          title: Severity
+        confidence:
+          type: number
+          title: Confidence
+        risk_score:
+          type: number
+          title: Risk Score
+        level:
+          type: string
+          title: Level
+        status:
+          type: string
+          title: Status
+        detected_at:
+          type: string
+          title: Detected At
+        resolved_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolved At
+        impact:
+          anyOf:
+          - $ref: '#/components/schemas/ImpactOut'
+          - type: 'null'
+        evidence:
+          items:
+            $ref: '#/components/schemas/EvidenceItem'
+          type: array
+          title: Evidence
+          default: []
+        recommendations:
+          items:
+            $ref: '#/components/schemas/RecommendationOut'
+          type: array
+          title: Recommendations
+          default: []
+        issue_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Issue Title
+        impact_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Impact Summary
+        time_ago:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Time Ago
+        history:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: History
+          default: []
+      type: object
+      required:
+      - id
+      - type
+      - entity
+      - severity
+      - confidence
+      - risk_score
+      - level
+      - status
+      - detected_at
+      title: DisruptionOut
+    EntityRef:
+      properties:
+        type:
+          type: string
+          title: Type
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - type
+      - id
+      - name
+      title: EntityRef
+    EvidenceItem:
+      properties:
+        source:
+          type: string
+          title: Source
+        simulated:
+          type: boolean
+          title: Simulated
+        metric:
+          type: string
+          title: Metric
+        value:
+          title: Value
+        ts:
+          type: string
+          title: Ts
+      type: object
+      required:
+      - source
+      - simulated
+      - metric
+      - value
+      - ts
+      title: EvidenceItem
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HealthOut:
       properties:
         status:
           type: string
-          example: "ok"
-        timestamp:
+          title: Status
+        db:
           type: string
-          format: date-time
+          title: Db
+        seed:
+          type: integer
+          title: Seed
         version:
           type: string
-          example: "1.0.0"
-        database:
-          type: string
-          example: "connected"
-        providers:
-          type: object
-          properties:
-            weather: { type: string, example: "open-meteo" }
-            traffic: { type: string, example: "simulated" }
-            suppliers: { type: string, example: "seeded" }
-            inventory: { type: string, example: "seeded" }
-
-    OverviewResponse:
+          title: Version
+          default: 1.0.0
       type: object
-      required: [kpis, active_risks_by_cause, regional_risk_levels, recent_disruptions, recommended_actions]
+      required:
+      - status
+      - db
+      - seed
+      title: HealthOut
+    ImpactOut:
       properties:
-        kpis:
-          type: object
-          required: [total_active_risks, high_severity_count, total_shipments_at_risk, total_revenue_at_risk, on_time_network_rate]
-          properties:
-            total_active_risks: { type: integer, example: 12 }
-            high_severity_count: { type: integer, example: 4 }
-            total_shipments_at_risk: { type: integer, example: 6 }
-            total_revenue_at_risk: { type: number, example: 485000 }
-            on_time_network_rate: { type: number, example: 87.5 }
-        active_risks_by_cause:
-          type: object
-          required: [supplier_delay, weather, traffic, inventory_shortage, geopolitical]
-          properties:
-            supplier_delay: { type: integer, example: 4 }
-            weather: { type: integer, example: 3 }
-            traffic: { type: integer, example: 2 }
-            inventory_shortage: { type: integer, example: 2 }
-            geopolitical: { type: integer, example: 1 }
-        regional_risk_levels:
-          type: array
+        affected_shipments:
           items:
-            type: object
-            required: [region, level, score]
-            properties:
-              region: { type: string, example: "North America" }
-              level: { type: string, enum: [low, medium, high], example: "medium" }
-              score: { type: number, example: 52 }
-        recent_disruptions:
+            type: string
           type: array
-          items:
-            $ref: '#/components/schemas/Disruption'
-        recommended_actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Recommendation'
-
-    NetworkResponse:
+          title: Affected Shipments
+        extra_delay_h:
+          type: number
+          title: Extra Delay H
+        stockout_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stockout Date
+        units_short:
+          type: number
+          title: Units Short
+        revenue_at_risk:
+          type: number
+          title: Revenue At Risk
+        margin_at_risk:
+          type: number
+          title: Margin At Risk
+          default: 0.0
       type: object
-      required: [locations, lanes]
+      required:
+      - affected_shipments
+      - extra_delay_h
+      - stockout_date
+      - units_short
+      - revenue_at_risk
+      title: ImpactOut
+    KpiCards:
+      properties:
+        active_disruptions:
+          type: integer
+          title: Active Disruptions
+          default: 0
+        high_risk_shipments:
+          type: integer
+          title: High Risk Shipments
+          default: 0
+        revenue_at_risk:
+          type: number
+          title: Revenue At Risk
+          default: 0.0
+        avg_delay_h:
+          type: number
+          title: Avg Delay H
+          default: 0.0
+        total_active_risks:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Active Risks
+        high_severity_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: High Severity Count
+        total_shipments_at_risk:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Shipments At Risk
+        total_revenue_at_risk:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Total Revenue At Risk
+        on_time_network_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: On Time Network Rate
+      type: object
+      title: KpiCards
+    LaneOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        from_id:
+          type: string
+          title: From Id
+        to_id:
+          type: string
+          title: To Id
+        from_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: From Name
+        to_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: To Name
+        distance_km:
+          type: number
+          title: Distance Km
+        baseline_duration_s:
+          type: number
+          title: Baseline Duration S
+        cost:
+          type: number
+          title: Cost
+        geometry:
+          additionalProperties: true
+          type: object
+          title: Geometry
+        approximate:
+          type: boolean
+          title: Approximate
+          default: false
+        risk_score:
+          type: number
+          title: Risk Score
+          default: 0.0
+        risk_level:
+          type: string
+          title: Risk Level
+          default: low
+        level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Level
+          default: low
+        current_duration_s:
+          type: number
+          title: Current Duration S
+          default: 0.0
+      type: object
+      required:
+      - id
+      - from_id
+      - to_id
+      - distance_km
+      - baseline_duration_s
+      - cost
+      - geometry
+      title: LaneOut
+    LocationOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        type:
+          type: string
+          title: Type
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - lat
+      - lng
+      title: LocationOut
+    NetworkOut:
       properties:
         locations:
-          type: array
           items:
-            $ref: '#/components/schemas/Location'
+            $ref: '#/components/schemas/LocationOut'
+          type: array
+          title: Locations
         lanes:
-          type: array
           items:
-            $ref: '#/components/schemas/Lane'
-
-    Location:
-      type: object
-      required: [id, name, type, lat, lng]
-      properties:
-        id: { type: string, example: "LOC_mumbai" }
-        name: { type: string, example: "Mumbai" }
-        type: { type: string, enum: [hub, warehouse, supplier, store], example: "store" }
-        lat: { type: number, example: 19.0760 }
-        lng: { type: number, example: 72.8777 }
-
-    Lane:
-      type: object
-      required: [id, from_id, to_id, from_name, to_name, distance_km, baseline_duration_s, current_duration_s, cost, risk_score, level, geometry]
-      properties:
-        id: { type: string, example: "L_mumbai_pune" }
-        from_id: { type: string, example: "LOC_mumbai" }
-        to_id: { type: string, example: "LOC_pune" }
-        from_name: { type: string, example: "Mumbai" }
-        to_name: { type: string, example: "Pune" }
-        distance_km: { type: number, example: 148 }
-        baseline_duration_s: { type: integer, example: 10800 }
-        current_duration_s: { type: integer, example: 18200 }
-        cost: { type: number, example: 450 }
-        risk_score: { type: number, example: 78 }
-        level: { type: string, enum: [low, medium, high], example: "high" }
-        geometry:
-          type: object
-          properties:
-            type: { type: string, example: "LineString" }
-            coordinates:
-              type: array
-              items:
-                type: array
-                items: { type: number }
-
-    Disruption:
-      type: object
-      required: [id, type, entity, severity, confidence, risk_score, level, status, detected_at, impact]
-      properties:
-        id: { type: string, example: "d_101" }
-        type: { type: string, enum: [weather, traffic, supplier_delay, inventory], example: "weather" }
-        entity:
-          type: object
-          required: [type, id, name]
-          properties:
-            type: { type: string, enum: [lane, supplier, location_sku], example: "lane" }
-            id: { type: string, example: "L_mumbai_pune" }
-            name: { type: string, example: "Mumbai to Pune Corridor" }
-            location_label: { type: string, example: "Rotterdam, NL" }
-        severity: { type: number, example: 0.85 }
-        confidence: { type: number, example: 0.80 }
-        risk_score: { type: number, example: 82 }
-        level: { type: string, enum: [low, medium, high], example: "high" }
-        status: { type: string, enum: [open, resolved], example: "open" }
-        detected_at: { type: string, format: date-time }
-        resolved_at: { type: string, format: date-time, nullable: true }
-        time_ago: { type: string, example: "2 hrs ago" }
-        issue_title: { type: string, example: "Severe weather" }
-        impact_summary: { type: string, example: "Port congestion" }
-        impact:
-          type: object
-          required: [affected_shipments, extra_delay_h, stockout_date, units_short, revenue_at_risk]
-          properties:
-            affected_shipments:
-              type: array
-              items: { type: string }
-              example: ["S-104", "S-108"]
-            extra_delay_h: { type: number, example: 6.5 }
-            stockout_date: { type: string, example: "2026-10-21" }
-            units_short: { type: integer, example: 340 }
-            revenue_at_risk: { type: number, example: 125000 }
-        evidence:
+            $ref: '#/components/schemas/LaneOut'
           type: array
+          title: Lanes
+      type: object
+      required:
+      - locations
+      - lanes
+      title: NetworkOut
+    OverviewOut:
+      properties:
+        kpis:
+          $ref: '#/components/schemas/KpiCards'
+        risk_by_cause:
+          $ref: '#/components/schemas/RiskByCause'
+        active_risks_by_cause:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Active Risks By Cause
+        top_risky_lanes:
           items:
-            $ref: '#/components/schemas/EvidenceItem'
-
-    EvidenceItem:
+            $ref: '#/components/schemas/RiskyLane'
+          type: array
+          title: Top Risky Lanes
+          default: []
+        regional_risk_levels:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Regional Risk Levels
+        recent_disruptions:
+          items:
+            $ref: '#/components/schemas/DisruptionOut'
+          type: array
+          title: Recent Disruptions
+          default: []
+        top_recommendations:
+          items:
+            $ref: '#/components/schemas/RecommendationOut'
+          type: array
+          title: Top Recommendations
+          default: []
+        recommended_actions:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/RecommendationOut'
+            type: array
+          - type: 'null'
+          title: Recommended Actions
+        network_status:
+          type: string
+          title: Network Status
+          default: operational
       type: object
-      required: [source, simulated, metric, value, ts]
+      required:
+      - kpis
+      - risk_by_cause
+      title: OverviewOut
+    RecommendationOut:
       properties:
-        source: { type: string, example: "open-meteo" }
-        simulated: { type: boolean, example: false }
-        metric: { type: string, example: "precip_mm_per_h" }
-        value: { type: number, example: 18.5 }
-        unit: { type: string, example: "mm/h" }
-        ts: { type: string, format: date-time }
-
-    DisruptionDetail:
-      allOf:
-        - $ref: '#/components/schemas/Disruption'
-        - type: object
-          properties:
-            recommendations:
-              type: array
-              items:
-                $ref: '#/components/schemas/Recommendation'
-            history:
-              type: array
-              items:
-                type: object
-                properties:
-                  ts: { type: string, format: date-time }
-                  event: { type: string }
-                  description: { type: string }
-
-    Recommendation:
-      type: object
-      required: [id, disruption_id, rank, action_type, title, explanation, delay_saved_h, cost_delta_pct, risk_reduction, confidence, status]
-      properties:
-        id: { type: string, example: "r_501" }
-        disruption_id: { type: string, example: "d_101" }
-        rank: { type: integer, example: 1 }
+        id:
+          type: string
+          title: Id
+        disruption_id:
+          type: string
+          title: Disruption Id
+        rank:
+          type: integer
+          title: Rank
         action_type:
           type: string
-          enum: [reroute, alternate_supplier, expedite, rebalance, increase_safety_stock, monitor]
-          example: "reroute"
-        title: { type: string, example: "Reroute via Singapore" }
-        explanation: { type: string, example: "Avoid congestion at Shenzhen. Estimated delay reduction: 2-3 days." }
-        delay_saved_h: { type: number, example: 48.0 }
-        cost_delta_pct: { type: number, example: 3.5 }
-        risk_reduction: { type: number, example: 52 }
-        confidence: { type: number, example: 0.78 }
-        status: { type: string, enum: [proposed, approved, rejected], example: "proposed" }
-        params: { type: object }
+          title: Action Type
+        title:
+          type: string
+          title: Title
+        explanation:
+          type: string
+          title: Explanation
+        delay_saved_h:
+          type: number
+          title: Delay Saved H
+        cost_delta:
+          type: number
+          title: Cost Delta
+        cost_delta_pct:
+          type: number
+          title: Cost Delta Pct
+        risk_reduction:
+          type: number
+          title: Risk Reduction
+        confidence:
+          type: number
+          title: Confidence
+        status:
+          type: string
+          title: Status
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+          default: {}
         evidence:
-          type: array
           items:
             $ref: '#/components/schemas/EvidenceItem'
-
-    Shipment:
-      type: object
-      required: [id, supplier_id, supplier_name, origin_id, origin_name, destination_id, destination_name, sku, sku_name, qty, status, planned_eta, current_eta, delay_h, risk_level]
-      properties:
-        id: { type: string, example: "S-104" }
-        supplier_id: { type: string, example: "SUP_pune_01" }
-        supplier_name: { type: string, example: "Maharashtra Precision Components" }
-        origin_id: { type: string, example: "LOC_pune" }
-        origin_name: { type: string, example: "Pune" }
-        destination_id: { type: string, example: "LOC_delhi" }
-        destination_name: { type: string, example: "Delhi NCR Hub" }
-        sku: { type: string, example: "SKU-01" }
-        sku_name: { type: string, example: "Industrial Electronic Controller" }
-        qty: { type: integer, example: 500 }
-        status: { type: string, enum: [in_transit, delivered, delayed, rerouted], example: "in_transit" }
-        planned_eta: { type: string, format: date-time }
-        current_eta: { type: string, format: date-time }
-        delay_h: { type: number, example: 6.5 }
-        risk_level: { type: string, enum: [low, medium, high], example: "high" }
-        route_lane_ids:
           type: array
-          items: { type: string }
-
-    Supplier:
+          title: Evidence
+          default: []
+        feasible:
+          type: boolean
+          title: Feasible
+          default: true
       type: object
-      required: [id, name, location_id, location_name, base_lead_time_days, current_delay_days, on_time_rate, reliability_score, active_disruptions_count]
+      required:
+      - id
+      - disruption_id
+      - rank
+      - action_type
+      - title
+      - explanation
+      - delay_saved_h
+      - cost_delta
+      - cost_delta_pct
+      - risk_reduction
+      - confidence
+      - status
+      title: RecommendationOut
+    RiskByCause:
       properties:
-        id: { type: string, example: "SUP_pune_01" }
-        name: { type: string, example: "Maharashtra Precision Components" }
-        location_id: { type: string, example: "LOC_pune" }
-        location_name: { type: string, example: "Pune" }
-        base_lead_time_days: { type: number, example: 4.5 }
-        current_delay_days: { type: number, example: 2.0 }
-        on_time_rate: { type: number, example: 68.5 }
-        reliability_score: { type: number, example: 0.72 }
-        active_disruptions_count: { type: integer, example: 1 }
-
-    RouteCompare:
+        weather:
+          type: integer
+          title: Weather
+          default: 0
+        traffic:
+          type: integer
+          title: Traffic
+          default: 0
+        supplier_delay:
+          type: integer
+          title: Supplier Delay
+          default: 0
+        inventory:
+          type: integer
+          title: Inventory
+          default: 0
+        inventory_shortage:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Inventory Shortage
+        geopolitical:
+          type: integer
+          title: Geopolitical
+          default: 0
       type: object
-      required: [shipment_id, priority, current, alternatives]
+      title: RiskByCause
+    RiskyLane:
       properties:
-        shipment_id: { type: string, example: "S-104" }
-        priority: { type: string, enum: [fastest, balanced, cheapest, safest], example: "balanced" }
+        lane_id:
+          type: string
+          title: Lane Id
+        name:
+          type: string
+          title: Name
+        risk_score:
+          type: number
+          title: Risk Score
+        level:
+          type: string
+          title: Level
+      type: object
+      required:
+      - lane_id
+      - name
+      - risk_score
+      - level
+      title: RiskyLane
+    RouteCompareOut:
+      properties:
+        shipment_id:
+          type: string
+          title: Shipment Id
+        priority:
+          type: string
+          title: Priority
         current:
           $ref: '#/components/schemas/RouteOption'
         alternatives:
-          type: array
           items:
-            $ref: '#/components/schemas/RouteAlternative'
-
+            $ref: '#/components/schemas/RouteOption'
+          type: array
+          title: Alternatives
+      type: object
+      required:
+      - shipment_id
+      - priority
+      - current
+      - alternatives
+      title: RouteCompareOut
+    RouteDelta:
+      properties:
+        duration_h:
+          type: number
+          title: Duration H
+        cost_pct:
+          type: number
+          title: Cost Pct
+        risk:
+          type: number
+          title: Risk
+      type: object
+      required:
+      - duration_h
+      - cost_pct
+      - risk
+      title: RouteDelta
     RouteOption:
-      type: object
-      required: [route_id, lane_ids, route_name, distance_km, duration_h, cost, risk_score, level, geometry]
       properties:
-        route_id: { type: string, example: "current_route" }
-        lane_ids: { type: array, items: { type: string } }
-        route_name: { type: string, example: "Via National Highway 48" }
-        distance_km: { type: number, example: 1420 }
-        duration_h: { type: number, example: 28.5 }
-        cost: { type: number, example: 3450 }
-        risk_score: { type: number, example: 78 }
-        level: { type: string, enum: [low, medium, high], example: "high" }
-        geometry: { type: object }
-
-    RouteAlternative:
-      allOf:
-        - $ref: '#/components/schemas/RouteOption'
-        - type: object
-          required: [rank, utility, delta]
-          properties:
-            rank: { type: integer, example: 1 }
-            utility: { type: number, example: 0.84 }
-            delta:
-              type: object
-              required: [duration_h, cost_pct, risk]
-              properties:
-                duration_h: { type: number, example: -6.0 }
-                cost_pct: { type: number, example: 4.2 }
-                risk: { type: number, example: -47 }
-
-    ApproveResult:
+        route_id:
+          type: string
+          title: Route Id
+          default: current_route
+        route_name:
+          type: string
+          title: Route Name
+          default: Current Route
+        lane_ids:
+          items:
+            type: string
+          type: array
+          title: Lane Ids
+        distance_km:
+          type: number
+          title: Distance Km
+          default: 0.0
+        duration_h:
+          type: number
+          title: Duration H
+        cost:
+          type: number
+          title: Cost
+        risk_score:
+          type: number
+          title: Risk Score
+        level:
+          type: string
+          title: Level
+          default: low
+        geometry:
+          additionalProperties: true
+          type: object
+          title: Geometry
+        delta:
+          anyOf:
+          - $ref: '#/components/schemas/RouteDelta'
+          - type: 'null'
+        rank:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rank
+        label:
+          type: string
+          title: Label
+          default: ''
+        utility:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Utility
       type: object
-      required: [success, recommendation_id, action_type, before_risk_score, after_risk_score, message, applied_at]
+      required:
+      - lane_ids
+      - duration_h
+      - cost
+      - risk_score
+      - geometry
+      title: RouteOption
+    ShipmentOut:
       properties:
-        success: { type: boolean, example: true }
-        recommendation_id: { type: string, example: "r_501" }
-        action_type: { type: string, example: "reroute" }
-        before_risk_score: { type: number, example: 82 }
-        after_risk_score: { type: number, example: 28 }
-        message: { type: string, example: "Reroute plan successfully applied to shipment S-104." }
-        applied_at: { type: string, format: date-time }
-
-    DetectionRunResult:
+        id:
+          type: string
+          title: Id
+        supplier_id:
+          type: string
+          title: Supplier Id
+        origin_id:
+          type: string
+          title: Origin Id
+        destination_id:
+          type: string
+          title: Destination Id
+        sku:
+          type: string
+          title: Sku
+        qty:
+          type: number
+          title: Qty
+        route_lane_ids:
+          items:
+            type: string
+          type: array
+          title: Route Lane Ids
+        status:
+          type: string
+          title: Status
+        planned_eta:
+          type: string
+          title: Planned Eta
+        current_eta:
+          type: string
+          title: Current Eta
+        origin_name:
+          type: string
+          title: Origin Name
+          default: ''
+        destination_name:
+          type: string
+          title: Destination Name
+          default: ''
+        supplier_name:
+          type: string
+          title: Supplier Name
+          default: ''
+        sku_name:
+          type: string
+          title: Sku Name
+          default: ''
+        risk_score:
+          type: number
+          title: Risk Score
+          default: 0.0
+        risk_level:
+          type: string
+          title: Risk Level
+          default: low
+        delay_hours:
+          type: number
+          title: Delay Hours
+          default: 0.0
+        delay_h:
+          type: number
+          title: Delay H
+          default: 0.0
       type: object
-      required: [run_id, timestamp, duration_ms, disruptions_detected, active_open_disruptions]
-      properties:
-        run_id: { type: string, example: "det_20261017_0930" }
-        timestamp: { type: string, format: date-time }
-        duration_ms: { type: integer, example: 120 }
-        disruptions_detected: { type: integer, example: 2 }
-        active_open_disruptions: { type: integer, example: 12 }
-
+      required:
+      - id
+      - supplier_id
+      - origin_id
+      - destination_id
+      - sku
+      - qty
+      - route_lane_ids
+      - status
+      - planned_eta
+      - current_eta
+      title: ShipmentOut
     SimulateRequest:
-      type: object
-      required: [scenario_id]
       properties:
-        scenario_id: { type: string, example: "sc_01" }
-        custom_params: { type: object }
-
+        scenario_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scenario Id
+        custom:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Custom
+      type: object
+      title: SimulateRequest
     SimulateResult:
-      type: object
-      required: [success, scenario_id, injected_disruption_id, description, status]
       properties:
-        success: { type: boolean, example: true }
-        scenario_id: { type: string, example: "sc_01" }
-        injected_disruption_id: { type: string, example: "d_101" }
-        description: { type: string, example: "Heavy rain on Mumbai-Pune corridor injected." }
-        status: { type: string, example: "active" }
-
-    ResetResult:
+        success:
+          type: boolean
+          title: Success
+          default: true
+        scenario_id:
+          type: string
+          title: Scenario Id
+        description:
+          type: string
+          title: Description
+        disruptions_created:
+          type: integer
+          title: Disruptions Created
+        disruption_ids:
+          items:
+            type: string
+          type: array
+          title: Disruption Ids
+        injected_disruption_id:
+          type: string
+          title: Injected Disruption Id
+          default: ''
+        status:
+          type: string
+          title: Status
+          default: active
+        message:
+          type: string
+          title: Message
       type: object
-      required: [success, message, restored_seed]
+      required:
+      - scenario_id
+      - description
+      - disruptions_created
+      - disruption_ids
+      - message
+      title: SimulateResult
+    SupplierOut:
       properties:
-        success: { type: boolean, example: true }
-        message: { type: string, example: "Simulation network reset to seeded pristine state." }
-        restored_seed: { type: integer, example: 42 }
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        location_id:
+          type: string
+          title: Location Id
+        location_name:
+          type: string
+          title: Location Name
+          default: ''
+        base_lead_time_days:
+          type: number
+          title: Base Lead Time Days
+        reliability:
+          type: number
+          title: Reliability
+        reliability_score:
+          type: number
+          title: Reliability Score
+          default: 0.0
+        active_disruptions_count:
+          type: integer
+          title: Active Disruptions Count
+          default: 0
+        current_delay_days:
+          type: number
+          title: Current Delay Days
+          default: 0.0
+        on_time_rate:
+          type: number
+          title: On Time Rate
+          default: 1.0
+        status:
+          type: string
+          title: Status
+          default: normal
+        risk_score:
+          type: number
+          title: Risk Score
+          default: 0.0
+        tier:
+          type: integer
+          title: Tier
+          default: 1
+      type: object
+      required:
+      - id
+      - name
+      - location_id
+      - base_lead_time_days
+      - reliability
+      title: SupplierOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

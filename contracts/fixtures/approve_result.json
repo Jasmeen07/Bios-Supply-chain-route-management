@@ -1,9 +1,11 @@
 {
   "success": true,
-  "recommendation_id": "r_501",
-  "action_type": "reroute",
-  "before_risk_score": 86,
-  "after_risk_score": 28,
-  "message": "Recommendation r_501 approved. Shipment S-104 successfully rerouted via Singapore Transshipment bypass.",
-  "applied_at": "2026-10-17T12:35:00Z"
+  "recommendation_id": "r_55c037bd",
+  "disruption_id": "d_6cae8b9c",
+  "action_type": "monitor",
+  "before_risk_score": 40.0,
+  "after_risk_score": 40.0,
+  "message": "Action 'Monitor \u2013 no immediate action' applied successfully. Risk score dropped from 40.0 to 40.0.",
+  "applied_at": "2026-10-17T14:08:10.159837Z",
+  "applied": true
 }
