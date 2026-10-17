@@ -8,15 +8,15 @@
 
 ```mermaid
 flowchart TD
-  S[Simulator / Scenarios] --> A[Signal Ingestion]
-  A -->|Traffic, Weather, Suppliers, Inventory| B[(SQLite Database)]
-  B --> C[Detection Engine (60s loop)]
-  C -->|Disruptions| D[Impact Analysis]
-  D --> E[Risk Scoring (0-100)]
-  E --> F[Response Generator & Route Optimiser]
-  F --> G[Ranking, Explanations & Evidence]
-  G --> H[FastAPI REST & WebSocket /ws/alerts]
-  H -->|User Approves| I[Apply Plan / Audit Log]
+  S["Simulator / Scenarios"] --> A["Signal Ingestion"]
+  A -->|"Traffic, Weather, Suppliers, Inventory"| B[("SQLite Database")]
+  B --> C["Detection Engine (60s loop)"]
+  C -->|"Disruptions"| D["Impact Analysis"]
+  D --> E["Risk Scoring (0-100)"]
+  E --> F["Response Generator & Route Optimiser"]
+  F --> G["Ranking, Explanations & Evidence"]
+  G --> H["FastAPI REST & WebSocket /ws/alerts"]
+  H -->|"User Approves"| I["Apply Plan / Audit Log"]
   I --> B
 ```
 
