@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "recommendation_id": "r_501",
+  "action_type": "reroute",
+  "before_risk_score": 86,
+  "after_risk_score": 28,
+  "message": "Recommendation r_501 approved. Shipment S-104 successfully rerouted via Singapore Transshipment bypass.",
+  "applied_at": "2026-10-17T12:35:00Z"
+}

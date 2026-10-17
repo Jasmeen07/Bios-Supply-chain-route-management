@@ -1,0 +1,154 @@
+{
+  "locations": [
+    { "id": "LOC_rotterdam", "name": "Rotterdam", "type": "hub", "lat": 51.9244, "lng": 4.4777 },
+    { "id": "LOC_new_york", "name": "New York", "type": "hub", "lat": 40.7128, "lng": -74.0060 },
+    { "id": "LOC_shanghai", "name": "Shanghai", "type": "hub", "lat": 31.2304, "lng": 121.4737 },
+    { "id": "LOC_shenzhen", "name": "Shenzhen", "type": "supplier", "lat": 22.5431, "lng": 114.0579 },
+    { "id": "LOC_singapore", "name": "Singapore", "type": "hub", "lat": 1.3521, "lng": 103.8198 },
+    { "id": "LOC_santos", "name": "Santos", "type": "hub", "lat": -23.9618, "lng": -46.3322 },
+    { "id": "LOC_mumbai", "name": "Mumbai", "type": "store", "lat": 19.0760, "lng": 72.8777 },
+    { "id": "LOC_delhi", "name": "Delhi NCR", "type": "warehouse", "lat": 28.6139, "lng": 77.2090 },
+    { "id": "LOC_bengaluru", "name": "Bengaluru", "type": "warehouse", "lat": 12.9716, "lng": 77.5946 },
+    { "id": "LOC_pune", "name": "Pune", "type": "supplier", "lat": 18.5204, "lng": 73.8567 },
+    { "id": "LOC_nagpur", "name": "Nagpur", "type": "warehouse", "lat": 21.1458, "lng": 79.0882 },
+    { "id": "LOC_kolkata", "name": "Kolkata", "type": "store", "lat": 22.5726, "lng": 88.3639 }
+  ],
+  "lanes": [
+    {
+      "id": "L_ny_rotterdam",
+      "from_id": "LOC_new_york",
+      "to_id": "LOC_rotterdam",
+      "from_name": "New York",
+      "to_name": "Rotterdam",
+      "distance_km": 5860,
+      "baseline_duration_s": 864000,
+      "current_duration_s": 950400,
+      "cost": 18500,
+      "risk_score": 22,
+      "level": "low",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-74.0060, 40.7128], [-40.0, 48.0], [4.4777, 51.9244]]
+      }
+    },
+    {
+      "id": "L_rotterdam_shanghai",
+      "from_id": "LOC_rotterdam",
+      "to_id": "LOC_shanghai",
+      "from_name": "Rotterdam",
+      "to_name": "Shanghai",
+      "distance_km": 19200,
+      "baseline_duration_s": 2419200,
+      "current_duration_s": 3024000,
+      "cost": 34000,
+      "risk_score": 82,
+      "level": "high",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[4.4777, 51.9244], [35.0, 30.0], [70.0, 20.0], [121.4737, 31.2304]]
+      }
+    },
+    {
+      "id": "L_shanghai_shenzhen",
+      "from_id": "LOC_shanghai",
+      "to_id": "LOC_shenzhen",
+      "from_name": "Shanghai",
+      "to_name": "Shenzhen",
+      "distance_km": 1210,
+      "baseline_duration_s": 86400,
+      "current_duration_s": 129600,
+      "cost": 2400,
+      "risk_score": 68,
+      "level": "medium",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[121.4737, 31.2304], [118.0, 26.0], [114.0579, 22.5431]]
+      }
+    },
+    {
+      "id": "L_shenzhen_singapore",
+      "from_id": "LOC_shenzhen",
+      "to_id": "LOC_singapore",
+      "from_name": "Shenzhen",
+      "to_name": "Singapore",
+      "distance_km": 2600,
+      "baseline_duration_s": 259200,
+      "current_duration_s": 388800,
+      "cost": 5200,
+      "risk_score": 86,
+      "level": "high",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[114.0579, 22.5431], [108.0, 12.0], [103.8198, 1.3521]]
+      }
+    },
+    {
+      "id": "L_singapore_santos",
+      "from_id": "LOC_singapore",
+      "to_id": "LOC_santos",
+      "from_name": "Singapore",
+      "to_name": "Santos",
+      "distance_km": 15900,
+      "baseline_duration_s": 2160000,
+      "current_duration_s": 2246400,
+      "cost": 28000,
+      "risk_score": 18,
+      "level": "low",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[103.8198, 1.3521], [60.0, -15.0], [20.0, -32.0], [-46.3322, -23.9618]]
+      }
+    },
+    {
+      "id": "L_santos_new_york",
+      "from_id": "LOC_santos",
+      "to_id": "LOC_new_york",
+      "from_name": "Santos",
+      "to_name": "New York",
+      "distance_km": 7680,
+      "baseline_duration_s": 1036800,
+      "current_duration_s": 1209600,
+      "cost": 16400,
+      "risk_score": 52,
+      "level": "medium",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-46.3322, -23.9618], [-55.0, 5.0], [-74.0060, 40.7128]]
+      }
+    },
+    {
+      "id": "L_mumbai_pune",
+      "from_id": "LOC_mumbai",
+      "to_id": "LOC_pune",
+      "from_name": "Mumbai",
+      "to_name": "Pune",
+      "distance_km": 148,
+      "baseline_duration_s": 10800,
+      "current_duration_s": 19800,
+      "cost": 650,
+      "risk_score": 82,
+      "level": "high",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[72.8777, 19.0760], [73.3, 18.8], [73.8567, 18.5204]]
+      }
+    },
+    {
+      "id": "L_delhi_pune",
+      "from_id": "LOC_delhi",
+      "to_id": "LOC_pune",
+      "from_name": "Delhi NCR",
+      "to_name": "Pune",
+      "distance_km": 1420,
+      "baseline_duration_s": 86400,
+      "current_duration_s": 95000,
+      "cost": 3450,
+      "risk_score": 34,
+      "level": "low",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[77.2090, 28.6139], [75.8, 23.0], [73.8567, 18.5204]]
+      }
+    }
+  ]
+}

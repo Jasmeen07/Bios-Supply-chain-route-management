@@ -1,0 +1,57 @@
+[
+  {
+    "id": "SUP_shenzhen_01",
+    "name": "Shenzhen Precision Electronics",
+    "location_id": "LOC_shenzhen",
+    "location_name": "Shenzhen, China",
+    "base_lead_time_days": 5.0,
+    "current_delay_days": 2.0,
+    "on_time_rate": 62.4,
+    "reliability_score": 0.65,
+    "active_disruptions_count": 1
+  },
+  {
+    "id": "SUP_rotterdam_01",
+    "name": "EuroTrans Logistics BV",
+    "location_id": "LOC_rotterdam",
+    "location_name": "Rotterdam, NL",
+    "base_lead_time_days": 3.0,
+    "current_delay_days": 1.5,
+    "on_time_rate": 81.0,
+    "reliability_score": 0.79,
+    "active_disruptions_count": 1
+  },
+  {
+    "id": "SUP_pune_01",
+    "name": "Maharashtra Precision Components",
+    "location_id": "LOC_pune",
+    "location_name": "Pune, India",
+    "base_lead_time_days": 4.5,
+    "current_delay_days": 0.0,
+    "on_time_rate": 93.5,
+    "reliability_score": 0.94,
+    "active_disruptions_count": 0
+  },
+  {
+    "id": "SUP_new_york_01",
+    "name": "Atlantic Cargo Corp",
+    "location_id": "LOC_new_york",
+    "location_name": "New York, USA",
+    "base_lead_time_days": 2.0,
+    "current_delay_days": 0.5,
+    "on_time_rate": 89.0,
+    "reliability_score": 0.88,
+    "active_disruptions_count": 1
+  },
+  {
+    "id": "SUP_santos_01",
+    "name": "Brazil Agro-Industrial Ltd",
+    "location_id": "LOC_santos",
+    "location_name": "Santos, Brazil",
+    "base_lead_time_days": 7.0,
+    "current_delay_days": 1.2,
+    "on_time_rate": 78.5,
+    "reliability_score": 0.75,
+    "active_disruptions_count": 1
+  }
+]

@@ -1,0 +1,567 @@
+openapi: 3.1.0
+info:
+  title: SupplySense Decision-Support API
+  description: Supply chain disruption detection, impact analysis, and route optimization API.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Local development backend
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /overview:
+    get:
+      summary: Dashboard overview metrics and top items
+      operationId: getOverview
+      responses:
+        '200':
+          description: Overview metrics payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverviewResponse'
+
+  /network:
+    get:
+      summary: Network topology including nodes, lanes, geometries, and current risks
+      operationId: getNetwork
+      responses:
+        '200':
+          description: Network graph topology
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkResponse'
+
+  /disruptions:
+    get:
+      summary: List disruptions with optional status and type filters
+      operationId: listDisruptions
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, resolved, all]
+            default: open
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [weather, traffic, supplier_delay, inventory]
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high]
+      responses:
+        '200':
+          description: List of disruptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Disruption'
+
+  /disruptions/{id}:
+    get:
+      summary: Get disruption details including impact, evidence, and recommendations
+      operationId: getDisruption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Disruption detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisruptionDetail'
+        '404':
+          description: Disruption not found
+
+  /shipments:
+    get:
+      summary: List all active and planned shipments
+      operationId: listShipments
+      responses:
+        '200':
+          description: List of shipments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Shipment'
+
+  /suppliers:
+    get:
+      summary: List suppliers with performance statistics
+      operationId: listSuppliers
+      responses:
+        '200':
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Supplier'
+
+  /routes/compare:
+    get:
+      summary: Compare current route against alternatives for a shipment
+      operationId: compareRoutes
+      parameters:
+        - name: shipment_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [fastest, balanced, cheapest, safest]
+            default: balanced
+      responses:
+        '200':
+          description: Comparison between current route and candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteCompare'
+
+  /recommendations:
+    get:
+      summary: List recommendations optionally filtered by disruption
+      operationId: listRecommendations
+      parameters:
+        - name: disruption_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recommendation'
+
+  /recommendations/{id}/approve:
+    post:
+      summary: Approve and apply a recommended action
+      operationId: approveRecommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Action applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveResult'
+
+  /detect/run:
+    post:
+      summary: Trigger a manual detection engine cycle
+      operationId: runDetection
+      responses:
+        '200':
+          description: Detection cycle results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectionRunResult'
+
+  /simulate:
+    post:
+      summary: Inject a scenario or custom disturbance into the simulation
+      operationId: simulateScenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateRequest'
+      responses:
+        '200':
+          description: Scenario injected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateResult'
+
+  /simulate/reset:
+    post:
+      summary: Reset simulator to original seeded state
+      operationId: resetSimulation
+      responses:
+        '200':
+          description: Simulation reset confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetResult'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, timestamp, version, database, providers]
+      properties:
+        status:
+          type: string
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+        database:
+          type: string
+          example: "connected"
+        providers:
+          type: object
+          properties:
+            weather: { type: string, example: "open-meteo" }
+            traffic: { type: string, example: "simulated" }
+            suppliers: { type: string, example: "seeded" }
+            inventory: { type: string, example: "seeded" }
+
+    OverviewResponse:
+      type: object
+      required: [kpis, active_risks_by_cause, regional_risk_levels, recent_disruptions, recommended_actions]
+      properties:
+        kpis:
+          type: object
+          required: [total_active_risks, high_severity_count, total_shipments_at_risk, total_revenue_at_risk, on_time_network_rate]
+          properties:
+            total_active_risks: { type: integer, example: 12 }
+            high_severity_count: { type: integer, example: 4 }
+            total_shipments_at_risk: { type: integer, example: 6 }
+            total_revenue_at_risk: { type: number, example: 485000 }
+            on_time_network_rate: { type: number, example: 87.5 }
+        active_risks_by_cause:
+          type: object
+          required: [supplier_delay, weather, traffic, inventory_shortage, geopolitical]
+          properties:
+            supplier_delay: { type: integer, example: 4 }
+            weather: { type: integer, example: 3 }
+            traffic: { type: integer, example: 2 }
+            inventory_shortage: { type: integer, example: 2 }
+            geopolitical: { type: integer, example: 1 }
+        regional_risk_levels:
+          type: array
+          items:
+            type: object
+            required: [region, level, score]
+            properties:
+              region: { type: string, example: "North America" }
+              level: { type: string, enum: [low, medium, high], example: "medium" }
+              score: { type: number, example: 52 }
+        recent_disruptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disruption'
+        recommended_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+
+    NetworkResponse:
+      type: object
+      required: [locations, lanes]
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        lanes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lane'
+
+    Location:
+      type: object
+      required: [id, name, type, lat, lng]
+      properties:
+        id: { type: string, example: "LOC_mumbai" }
+        name: { type: string, example: "Mumbai" }
+        type: { type: string, enum: [hub, warehouse, supplier, store], example: "store" }
+        lat: { type: number, example: 19.0760 }
+        lng: { type: number, example: 72.8777 }
+
+    Lane:
+      type: object
+      required: [id, from_id, to_id, from_name, to_name, distance_km, baseline_duration_s, current_duration_s, cost, risk_score, level, geometry]
+      properties:
+        id: { type: string, example: "L_mumbai_pune" }
+        from_id: { type: string, example: "LOC_mumbai" }
+        to_id: { type: string, example: "LOC_pune" }
+        from_name: { type: string, example: "Mumbai" }
+        to_name: { type: string, example: "Pune" }
+        distance_km: { type: number, example: 148 }
+        baseline_duration_s: { type: integer, example: 10800 }
+        current_duration_s: { type: integer, example: 18200 }
+        cost: { type: number, example: 450 }
+        risk_score: { type: number, example: 78 }
+        level: { type: string, enum: [low, medium, high], example: "high" }
+        geometry:
+          type: object
+          properties:
+            type: { type: string, example: "LineString" }
+            coordinates:
+              type: array
+              items:
+                type: array
+                items: { type: number }
+
+    Disruption:
+      type: object
+      required: [id, type, entity, severity, confidence, risk_score, level, status, detected_at, impact]
+      properties:
+        id: { type: string, example: "d_101" }
+        type: { type: string, enum: [weather, traffic, supplier_delay, inventory], example: "weather" }
+        entity:
+          type: object
+          required: [type, id, name]
+          properties:
+            type: { type: string, enum: [lane, supplier, location_sku], example: "lane" }
+            id: { type: string, example: "L_mumbai_pune" }
+            name: { type: string, example: "Mumbai to Pune Corridor" }
+            location_label: { type: string, example: "Rotterdam, NL" }
+        severity: { type: number, example: 0.85 }
+        confidence: { type: number, example: 0.80 }
+        risk_score: { type: number, example: 82 }
+        level: { type: string, enum: [low, medium, high], example: "high" }
+        status: { type: string, enum: [open, resolved], example: "open" }
+        detected_at: { type: string, format: date-time }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        time_ago: { type: string, example: "2 hrs ago" }
+        issue_title: { type: string, example: "Severe weather" }
+        impact_summary: { type: string, example: "Port congestion" }
+        impact:
+          type: object
+          required: [affected_shipments, extra_delay_h, stockout_date, units_short, revenue_at_risk]
+          properties:
+            affected_shipments:
+              type: array
+              items: { type: string }
+              example: ["S-104", "S-108"]
+            extra_delay_h: { type: number, example: 6.5 }
+            stockout_date: { type: string, example: "2026-10-21" }
+            units_short: { type: integer, example: 340 }
+            revenue_at_risk: { type: number, example: 125000 }
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceItem'
+
+    EvidenceItem:
+      type: object
+      required: [source, simulated, metric, value, ts]
+      properties:
+        source: { type: string, example: "open-meteo" }
+        simulated: { type: boolean, example: false }
+        metric: { type: string, example: "precip_mm_per_h" }
+        value: { type: number, example: 18.5 }
+        unit: { type: string, example: "mm/h" }
+        ts: { type: string, format: date-time }
+
+    DisruptionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Disruption'
+        - type: object
+          properties:
+            recommendations:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recommendation'
+            history:
+              type: array
+              items:
+                type: object
+                properties:
+                  ts: { type: string, format: date-time }
+                  event: { type: string }
+                  description: { type: string }
+
+    Recommendation:
+      type: object
+      required: [id, disruption_id, rank, action_type, title, explanation, delay_saved_h, cost_delta_pct, risk_reduction, confidence, status]
+      properties:
+        id: { type: string, example: "r_501" }
+        disruption_id: { type: string, example: "d_101" }
+        rank: { type: integer, example: 1 }
+        action_type:
+          type: string
+          enum: [reroute, alternate_supplier, expedite, rebalance, increase_safety_stock, monitor]
+          example: "reroute"
+        title: { type: string, example: "Reroute via Singapore" }
+        explanation: { type: string, example: "Avoid congestion at Shenzhen. Estimated delay reduction: 2-3 days." }
+        delay_saved_h: { type: number, example: 48.0 }
+        cost_delta_pct: { type: number, example: 3.5 }
+        risk_reduction: { type: number, example: 52 }
+        confidence: { type: number, example: 0.78 }
+        status: { type: string, enum: [proposed, approved, rejected], example: "proposed" }
+        params: { type: object }
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceItem'
+
+    Shipment:
+      type: object
+      required: [id, supplier_id, supplier_name, origin_id, origin_name, destination_id, destination_name, sku, sku_name, qty, status, planned_eta, current_eta, delay_h, risk_level]
+      properties:
+        id: { type: string, example: "S-104" }
+        supplier_id: { type: string, example: "SUP_pune_01" }
+        supplier_name: { type: string, example: "Maharashtra Precision Components" }
+        origin_id: { type: string, example: "LOC_pune" }
+        origin_name: { type: string, example: "Pune" }
+        destination_id: { type: string, example: "LOC_delhi" }
+        destination_name: { type: string, example: "Delhi NCR Hub" }
+        sku: { type: string, example: "SKU-01" }
+        sku_name: { type: string, example: "Industrial Electronic Controller" }
+        qty: { type: integer, example: 500 }
+        status: { type: string, enum: [in_transit, delivered, delayed, rerouted], example: "in_transit" }
+        planned_eta: { type: string, format: date-time }
+        current_eta: { type: string, format: date-time }
+        delay_h: { type: number, example: 6.5 }
+        risk_level: { type: string, enum: [low, medium, high], example: "high" }
+        route_lane_ids:
+          type: array
+          items: { type: string }
+
+    Supplier:
+      type: object
+      required: [id, name, location_id, location_name, base_lead_time_days, current_delay_days, on_time_rate, reliability_score, active_disruptions_count]
+      properties:
+        id: { type: string, example: "SUP_pune_01" }
+        name: { type: string, example: "Maharashtra Precision Components" }
+        location_id: { type: string, example: "LOC_pune" }
+        location_name: { type: string, example: "Pune" }
+        base_lead_time_days: { type: number, example: 4.5 }
+        current_delay_days: { type: number, example: 2.0 }
+        on_time_rate: { type: number, example: 68.5 }
+        reliability_score: { type: number, example: 0.72 }
+        active_disruptions_count: { type: integer, example: 1 }
+
+    RouteCompare:
+      type: object
+      required: [shipment_id, priority, current, alternatives]
+      properties:
+        shipment_id: { type: string, example: "S-104" }
+        priority: { type: string, enum: [fastest, balanced, cheapest, safest], example: "balanced" }
+        current:
+          $ref: '#/components/schemas/RouteOption'
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteAlternative'
+
+    RouteOption:
+      type: object
+      required: [route_id, lane_ids, route_name, distance_km, duration_h, cost, risk_score, level, geometry]
+      properties:
+        route_id: { type: string, example: "current_route" }
+        lane_ids: { type: array, items: { type: string } }
+        route_name: { type: string, example: "Via National Highway 48" }
+        distance_km: { type: number, example: 1420 }
+        duration_h: { type: number, example: 28.5 }
+        cost: { type: number, example: 3450 }
+        risk_score: { type: number, example: 78 }
+        level: { type: string, enum: [low, medium, high], example: "high" }
+        geometry: { type: object }
+
+    RouteAlternative:
+      allOf:
+        - $ref: '#/components/schemas/RouteOption'
+        - type: object
+          required: [rank, utility, delta]
+          properties:
+            rank: { type: integer, example: 1 }
+            utility: { type: number, example: 0.84 }
+            delta:
+              type: object
+              required: [duration_h, cost_pct, risk]
+              properties:
+                duration_h: { type: number, example: -6.0 }
+                cost_pct: { type: number, example: 4.2 }
+                risk: { type: number, example: -47 }
+
+    ApproveResult:
+      type: object
+      required: [success, recommendation_id, action_type, before_risk_score, after_risk_score, message, applied_at]
+      properties:
+        success: { type: boolean, example: true }
+        recommendation_id: { type: string, example: "r_501" }
+        action_type: { type: string, example: "reroute" }
+        before_risk_score: { type: number, example: 82 }
+        after_risk_score: { type: number, example: 28 }
+        message: { type: string, example: "Reroute plan successfully applied to shipment S-104." }
+        applied_at: { type: string, format: date-time }
+
+    DetectionRunResult:
+      type: object
+      required: [run_id, timestamp, duration_ms, disruptions_detected, active_open_disruptions]
+      properties:
+        run_id: { type: string, example: "det_20261017_0930" }
+        timestamp: { type: string, format: date-time }
+        duration_ms: { type: integer, example: 120 }
+        disruptions_detected: { type: integer, example: 2 }
+        active_open_disruptions: { type: integer, example: 12 }
+
+    SimulateRequest:
+      type: object
+      required: [scenario_id]
+      properties:
+        scenario_id: { type: string, example: "sc_01" }
+        custom_params: { type: object }
+
+    SimulateResult:
+      type: object
+      required: [success, scenario_id, injected_disruption_id, description, status]
+      properties:
+        success: { type: boolean, example: true }
+        scenario_id: { type: string, example: "sc_01" }
+        injected_disruption_id: { type: string, example: "d_101" }
+        description: { type: string, example: "Heavy rain on Mumbai-Pune corridor injected." }
+        status: { type: string, example: "active" }
+
+    ResetResult:
+      type: object
+      required: [success, message, restored_seed]
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string, example: "Simulation network reset to seeded pristine state." }
+        restored_seed: { type: integer, example: 42 }

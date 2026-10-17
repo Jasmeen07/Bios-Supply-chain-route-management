@@ -1,0 +1,120 @@
+{
+  "id": "d_101",
+  "type": "supplier_delay",
+  "entity": {
+    "type": "supplier",
+    "id": "SUP_shenzhen_01",
+    "name": "Shenzhen Precision Electronics",
+    "location_label": "Shenzhen, China"
+  },
+  "severity": 0.88,
+  "confidence": 0.82,
+  "risk_score": 86,
+  "level": "high",
+  "status": "open",
+  "detected_at": "2026-10-17T12:30:00Z",
+  "time_ago": "2 hrs ago",
+  "issue_title": "Supplier delay",
+  "impact_summary": "Component shortage",
+  "impact": {
+    "affected_shipments": ["S-104", "S-109"],
+    "extra_delay_h": 48.0,
+    "stockout_date": "2026-10-21",
+    "units_short": 420,
+    "revenue_at_risk": 185000
+  },
+  "evidence": [
+    {
+      "source": "supplier-telemetry",
+      "simulated": true,
+      "metric": "lead_time_z_score",
+      "value": 3.2,
+      "unit": "z",
+      "ts": "2026-10-17T12:25:00Z"
+    },
+    {
+      "source": "erp-order-tracking",
+      "simulated": true,
+      "metric": "on_time_rate",
+      "value": 62.4,
+      "unit": "%",
+      "ts": "2026-10-17T12:20:00Z"
+    },
+    {
+      "source": "historical-shipment-log",
+      "simulated": true,
+      "metric": "rolling_avg_delay_hours",
+      "value": 38.5,
+      "unit": "hours",
+      "ts": "2026-10-17T11:45:00Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "r_501",
+      "disruption_id": "d_101",
+      "rank": 1,
+      "action_type": "reroute",
+      "title": "Reroute via Singapore",
+      "explanation": "Avoid congestion at Shenzhen. Estimated delay reduction: 2-3 days.",
+      "delay_saved_h": 52.0,
+      "cost_delta_pct": 3.8,
+      "risk_reduction": 58,
+      "confidence": 0.84,
+      "status": "proposed",
+      "params": {
+        "shipment_id": "S-104",
+        "new_waypoint": "Singapore Transshipment Center"
+      },
+      "evidence": [
+        {
+          "source": "graph-router",
+          "simulated": true,
+          "metric": "delay_reduction_days",
+          "value": 2.5,
+          "unit": "days",
+          "ts": "2026-10-17T12:31:00Z"
+        }
+      ]
+    },
+    {
+      "id": "r_502",
+      "disruption_id": "d_101",
+      "rank": 2,
+      "action_type": "alternate_supplier",
+      "title": "Activate alternate supplier",
+      "explanation": "Component stock below threshold. Switch to qualified supplier in Vietnam.",
+      "delay_saved_h": 40.0,
+      "cost_delta_pct": 5.2,
+      "risk_reduction": 44,
+      "confidence": 0.80,
+      "status": "proposed",
+      "params": {
+        "new_supplier_id": "SUP_vietnam_02",
+        "reallocated_units": 420
+      },
+      "evidence": [
+        {
+          "source": "supplier-index",
+          "simulated": true,
+          "metric": "supplier_lead_time_days",
+          "value": 3.0,
+          "unit": "days",
+          "ts": "2026-10-17T12:31:00Z"
+        }
+      ]
+    }
+  ],
+  "history": [
+    {
+      "ts": "2026-10-17T12:30:00Z",
+      "event": "disruption_detected",
+      "description": "Supplier lead time drift detected (z=3.2, on-time=62.4%). Risk score calculated: 86 (High)."
+    },
+    {
+      "ts": "2026-10-17T12:31:00Z",
+      "event": "recommendations_generated",
+      "description": "Generated 2 candidate actions (Reroute via Singapore, Activate Alternate Supplier Vietnam)."
+    }
+  ]
+}
