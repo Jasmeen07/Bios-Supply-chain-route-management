@@ -142,17 +142,36 @@ export default function RealLeafletRouteCompareMap({
 
     group.clearLayers();
 
-    const paths = routeCorridors.default;
+    const toLatLngs = (coords: any): [number, number][] => {
+      if (!Array.isArray(coords)) return [];
+      return coords.map((c: any) => {
+        if (Array.isArray(c) && c.length >= 2) {
+          if (c[0] > 50 && c[1] < 40) {
+            return [c[1], c[0]] as [number, number];
+          }
+          return [c[0], c[1]] as [number, number];
+        }
+        return [0, 0] as [number, number];
+      }).filter((c: [number, number]) => c[0] !== 0 && c[1] !== 0);
+    };
+
+    const currentFromData = toLatLngs(routeData?.current?.geometry?.coordinates);
+    const alt1FromData = toLatLngs(routeData?.alternatives?.[0]?.geometry?.coordinates);
+    const alt2FromData = toLatLngs(routeData?.alternatives?.[1]?.geometry?.coordinates);
+
+    const currentPath = currentFromData.length > 1 ? currentFromData : routeCorridors.default.current;
+    const alt1Path = alt1FromData.length > 1 ? alt1FromData : routeCorridors.default.alt1;
+    const alt2Path = alt2FromData.length > 1 ? alt2FromData : routeCorridors.default.alt2;
 
     // 1. Current Impaired Route (Red, dashed, warning)
-    L.polyline(paths.current, {
+    L.polyline(currentPath, {
       color: '#DC2626',
       weight: 7,
       opacity: 0.25,
       lineCap: 'round',
     }).addTo(group);
 
-    const currentPolyline = L.polyline(paths.current, {
+    const currentPolyline = L.polyline(currentPath, {
       color: '#DC2626',
       weight: 4,
       opacity: 0.9,
@@ -162,22 +181,22 @@ export default function RealLeafletRouteCompareMap({
 
     currentPolyline.bindPopup(`
       <div style="font-family: Inter, sans-serif; padding: 4px;">
-        <div style="font-weight: 800; color: #991B1B; font-size: 12px;">Current Impaired Path</div>
-        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Via NH 48 Coastal Belt • Heavy Delay (+6h)</div>
-        <div style="font-weight: 700; color: #DC2626; font-size: 11px; margin-top: 4px;">Risk: 86 / 100 (High)</div>
+        <div style="font-weight: 800; color: #991B1B; font-size: 12px;">Current Planned Path</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">${routeData?.current?.route_name || 'Standard Corridor'}</div>
+        <div style="font-weight: 700; color: #DC2626; font-size: 11px; margin-top: 4px;">Risk: ${routeData?.current?.risk_score ?? 86} / 100</div>
       </div>
     `);
 
     // 2. Alternative 1 (Recommended Bypass - Emerald)
     const isAlt1Selected = selectedAltIndex === 0;
-    L.polyline(paths.alt1, {
+    L.polyline(alt1Path, {
       color: '#16A34A',
       weight: isAlt1Selected ? 8 : 4,
       opacity: isAlt1Selected ? 0.35 : 0.15,
       lineCap: 'round',
     }).addTo(group);
 
-    const alt1Polyline = L.polyline(paths.alt1, {
+    const alt1Polyline = L.polyline(alt1Path, {
       color: '#16A34A',
       weight: isAlt1Selected ? 5 : 3,
       opacity: isAlt1Selected ? 1 : 0.6,
@@ -186,22 +205,22 @@ export default function RealLeafletRouteCompareMap({
 
     alt1Polyline.bindPopup(`
       <div style="font-family: Inter, sans-serif; padding: 4px;">
-        <div style="font-weight: 800; color: #166534; font-size: 12px;">Candidate 1: Central Bypass Corridor</div>
-        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Avoids flood zone • Saves 52h • +3.8% cost</div>
-        <div style="font-weight: 700; color: #16A34A; font-size: 11px; margin-top: 4px;">Risk: 28 / 100 (Optimal)</div>
+        <div style="font-weight: 800; color: #166534; font-size: 12px;">Candidate 1: ${routeData?.alternatives?.[0]?.route_name || 'Recommended Alternative'}</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Duration: ${routeData?.alternatives?.[0]?.duration_h ?? 24}h • Cost: $${routeData?.alternatives?.[0]?.cost ?? 1200}</div>
+        <div style="font-weight: 700; color: #16A34A; font-size: 11px; margin-top: 4px;">Risk: ${routeData?.alternatives?.[0]?.risk_score ?? 28} / 100</div>
       </div>
     `);
 
     // 3. Alternative 2 (Expedited Route - Amber)
     const isAlt2Selected = selectedAltIndex === 1;
-    L.polyline(paths.alt2, {
+    L.polyline(alt2Path, {
       color: '#D97706',
       weight: isAlt2Selected ? 8 : 4,
       opacity: isAlt2Selected ? 0.35 : 0.15,
       lineCap: 'round',
     }).addTo(group);
 
-    const alt2Polyline = L.polyline(paths.alt2, {
+    const alt2Polyline = L.polyline(alt2Path, {
       color: '#D97706',
       weight: isAlt2Selected ? 5 : 3,
       opacity: isAlt2Selected ? 1 : 0.6,
@@ -210,15 +229,15 @@ export default function RealLeafletRouteCompareMap({
 
     alt2Polyline.bindPopup(`
       <div style="font-family: Inter, sans-serif; padding: 4px;">
-        <div style="font-weight: 800; color: #B45309; font-size: 12px;">Candidate 2: Direct Corridor</div>
-        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Fastest transit • Higher toll rates (+8.2%)</div>
-        <div style="font-weight: 700; color: #D97706; font-size: 11px; margin-top: 4px;">Risk: 34 / 100</div>
+        <div style="font-weight: 800; color: #B45309; font-size: 12px;">Candidate 2: ${routeData?.alternatives?.[1]?.route_name || 'Second Alternative'}</div>
+        <div style="color: #423E3A; font-size: 11px; margin-top: 2px;">Duration: ${routeData?.alternatives?.[1]?.duration_h ?? 28}h</div>
+        <div style="font-weight: 700; color: #D97706; font-size: 11px; margin-top: 4px;">Risk: ${routeData?.alternatives?.[1]?.risk_score ?? 34} / 100</div>
       </div>
     `);
 
     // Origin Pin
-    const originCoord = paths.current[0];
-    const destCoord = paths.current[paths.current.length - 1];
+    const originCoord = currentPath[0] || [18.5204, 73.8567];
+    const destCoord = currentPath[currentPath.length - 1] || [28.6139, 77.2090];
 
     const originHtml = `
       <div style="display: flex; align-items: center; justify-content: center;">
@@ -245,20 +264,26 @@ export default function RealLeafletRouteCompareMap({
       icon: L.divIcon({ html: destHtml, className: 'dest-marker', iconSize: [18, 18], iconAnchor: [9, 9] }),
     }).addTo(group);
 
-    // Warning Badge on blocked lane
-    const warningHtml = `
-      <div style="background: #FDEBEB; border: 1px solid #F8B4B4; border-radius: 8px; padding: 3px 8px; box-shadow: 0 2px 8px rgba(220,38,38,0.25); display: flex; align-items: center; gap: 5px; font-family: Inter, sans-serif; font-size: 10px; font-weight: bold; color: #991B1B;">
-        <span>⚠ Blocked Lane</span>
-      </div>
-    `;
-    L.marker([20.4, 72.9], {
-      icon: L.divIcon({ html: warningHtml, className: 'blocked-warning', iconSize: [100, 24], iconAnchor: [50, 12] }),
-    }).addTo(group);
+    // Warning Badge on highest risk route point
+    if (currentPath.length > 2) {
+      const midPoint = currentPath[Math.floor(currentPath.length / 2)];
+      const warningHtml = `
+        <div style="background: #FDEBEB; border: 1px solid #F8B4B4; border-radius: 8px; padding: 3px 8px; box-shadow: 0 2px 8px rgba(220,38,38,0.25); display: flex; align-items: center; gap: 5px; font-family: Inter, sans-serif; font-size: 10px; font-weight: bold; color: #991B1B;">
+          <span>⚠ Disruption Alert</span>
+        </div>
+      `;
+      L.marker(midPoint, {
+        icon: L.divIcon({ html: warningHtml, className: 'blocked-warning', iconSize: [100, 24], iconAnchor: [50, 12] }),
+      }).addTo(group);
+    }
 
     // Fit bounds with animate: false to completely avoid zoom transition race condition
     try {
-      const bounds = L.latLngBounds([...paths.current, ...paths.alt1]);
-      map.fitBounds(bounds, { padding: [40, 40], animate: false });
+      const allPoints = [...currentPath, ...alt1Path, ...alt2Path];
+      if (allPoints.length > 0) {
+        const bounds = L.latLngBounds(allPoints);
+        map.fitBounds(bounds, { padding: [40, 40], animate: false });
+      }
     } catch (e) {
       // ignore
     }
@@ -266,7 +291,7 @@ export default function RealLeafletRouteCompareMap({
 
   useEffect(() => {
     renderRoutes();
-  }, [selectedAltIndex, originCity, destinationCity]);
+  }, [routeData, selectedAltIndex, originCity, destinationCity]);
 
   return (
     <div className="w-full h-[340px] bg-[#FAF8F5] rounded-xl border border-cream-border overflow-hidden relative">

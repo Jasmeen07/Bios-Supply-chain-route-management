@@ -21,7 +21,6 @@ def main():
     print("=" * 65)
 
     env = os.environ.copy()
-    env["NEXT_PUBLIC_USE_MOCK"] = "false"
     env["NEXT_PUBLIC_API_URL"] = "http://localhost:8000/api"
     env["NEXT_PUBLIC_WS_URL"] = "ws://localhost:8000/ws/alerts"
 

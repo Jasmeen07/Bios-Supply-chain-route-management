@@ -3,7 +3,15 @@
 import { useEffect, useState, useRef } from 'react';
 import { WsAlertEvent } from './types';
 import { subscribeAlerts } from './mockData';
+import { getBackendStatus } from './api';
 
+/**
+ * Unified alerts hook.
+ * - ALWAYS subscribes to mock-store events (so mock-mode simulation / approve
+ *   produces immediate toasts and KPI updates).
+ * - Only opens a real WebSocket to the backend if the auto-detect probe
+ *   (in api.ts) confirmed the backend is online.
+ */
 export function useAlerts(onEvent?: (event: WsAlertEvent) => void) {
   const [isConnected, setIsConnected] = useState<boolean>(true);
   const [latestEvent, setLatestEvent] = useState<WsAlertEvent | null>(null);
@@ -19,7 +27,7 @@ export function useAlerts(onEvent?: (event: WsAlertEvent) => void) {
     let reconnectTimeout: any = null;
     let mockUnsubscribe: (() => void) | null = null;
 
-    // Listen to mock store events in all cases
+    // Always listen to mock store events (works in both mock & live mode)
     mockUnsubscribe = subscribeAlerts((event) => {
       setLatestEvent(event);
       if (callbackRef.current) {
@@ -48,7 +56,7 @@ export function useAlerts(onEvent?: (event: WsAlertEvent) => void) {
         };
 
         socket.onclose = () => {
-          // Reconnect with backoff
+          // Reconnect with backoff (only if backend was confirmed online)
           reconnectTimeout = setTimeout(connectWs, 5000);
         };
 
@@ -56,14 +64,25 @@ export function useAlerts(onEvent?: (event: WsAlertEvent) => void) {
           if (socket) socket.close();
         };
       } catch (err) {
-        // Fall back gracefully to mock emitter
         reconnectTimeout = setTimeout(connectWs, 8000);
       }
     }
 
-    if (process.env.NEXT_PUBLIC_USE_MOCK === 'false') {
-      connectWs();
-    }
+    // Only attempt WebSocket when the backend was confirmed reachable by the
+    // auto-detect probe in api.ts. This prevents connection spam when running
+    // the frontend standalone.
+    const checkAndConnect = () => {
+      const status = getBackendStatus();
+      if (status === 'online') {
+        connectWs();
+      } else if (status === 'unknown') {
+        // Backend not probed yet — check again shortly after first API call resolves
+        setTimeout(checkAndConnect, 3000);
+      }
+      // status === 'offline' → skip WebSocket entirely, mock events handle everything
+    };
+
+    checkAndConnect();
 
     return () => {
       if (socket) socket.close();

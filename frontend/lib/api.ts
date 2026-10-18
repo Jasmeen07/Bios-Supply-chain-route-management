@@ -11,10 +11,54 @@ import {
 import { mockStore } from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== 'false'; // Default to true in dev if backend not running
+
+// ---------------------------------------------------------------------------
+// Auto-detect backend availability
+// On first API call we probe the backend. If it responds we use live mode for
+// the rest of the session. If it fails we switch to mock mode permanently.
+// This means the frontend works perfectly standalone (just `npm run dev`)
+// AND works with the live backend when it's running – zero config needed.
+// ---------------------------------------------------------------------------
+let _backendStatus: 'unknown' | 'online' | 'offline' = 'unknown';
+let _probePromise: Promise<boolean> | null = null;
+
+async function isBackendOnline(): Promise<boolean> {
+  if (_backendStatus === 'online') return true;
+  if (_backendStatus === 'offline') return false;
+
+  // Only probe once – reuse the in-flight promise if multiple calls arrive simultaneously
+  if (!_probePromise) {
+    _probePromise = (async () => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2000); // 2s max wait
+        const res = await fetch(`${BASE_URL}/overview`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (res.ok) {
+          _backendStatus = 'online';
+          console.info('[SupplySense] Backend detected at', BASE_URL, '→ live mode');
+          return true;
+        }
+        throw new Error(`status ${res.status}`);
+      } catch {
+        _backendStatus = 'offline';
+        console.info('[SupplySense] Backend unreachable → mock mode (all features work offline)');
+        return false;
+      }
+    })();
+  }
+  return _probePromise;
+}
+
+/** Expose the resolved backend status so other modules (e.g. useAlerts) can check */
+export function getBackendStatus(): 'unknown' | 'online' | 'offline' {
+  return _backendStatus;
+}
 
 async function fetchWithFallback<T>(endpoint: string, mockFn: () => T, options?: RequestInit): Promise<T> {
-  if (USE_MOCK) {
+  const online = await isBackendOnline();
+
+  if (!online) {
     // Artificial small delay to reflect realistic network feel
     await new Promise((r) => setTimeout(r, 60));
     return mockFn();

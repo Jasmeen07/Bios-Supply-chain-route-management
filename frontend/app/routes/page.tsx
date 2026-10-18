@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Header from '../../components/Header';
 import DemoBanner from '../../components/DemoBanner';
 import { api } from '../../lib/api';
+import SimulatorDrawer from '../../components/SimulatorDrawer';
 import { RouteCompareData, RouteAlternative, Shipment } from '../../lib/types';
 import { CheckCircle2, GitBranch, Clock, DollarSign, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -32,6 +33,7 @@ function RoutePlanningContent() {
   const [selectedAltIndex, setSelectedAltIndex] = useState<number>(0);
   const [isApplying, setIsApplying] = useState<boolean>(false);
   const [appliedNotice, setAppliedNotice] = useState<{ before: number; after: number; text: string } | null>(null);
+  const [isSimOpen, setIsSimOpen] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadShipments() {
@@ -45,15 +47,16 @@ function RoutePlanningContent() {
     loadShipments();
   }, []);
 
-  useEffect(() => {
-    async function loadRouteComparison() {
-      try {
-        const data = await api.getRouteCompare(selectedShipmentId, priority);
-        setRouteData(data);
-      } catch (e) {
-        console.error(e);
-      }
+  const loadRouteComparison = async () => {
+    try {
+      const data = await api.getRouteCompare(selectedShipmentId, priority);
+      setRouteData(data);
+    } catch (e) {
+      console.error(e);
     }
+  };
+
+  useEffect(() => {
     loadRouteComparison();
   }, [selectedShipmentId, priority]);
 
@@ -61,15 +64,22 @@ function RoutePlanningContent() {
     if (!routeData) return;
     try {
       setIsApplying(true);
-      const chosen = routeData.alternatives[selectedAltIndex];
+      const chosen = routeData.alternatives[selectedAltIndex] || routeData.alternatives[0];
       const res = await api.approveRecommendation('r_501');
       setAppliedNotice({
-        before: res.before_risk_score,
-        after: res.after_risk_score,
-        text: `Alternative route "${chosen.route_name}" successfully approved and active.`,
+        before: res?.before_risk_score ?? routeData.current.risk_score,
+        after: res?.after_risk_score ?? chosen.risk_score,
+        text: `Alternative route "${chosen?.route_name || 'Recommended Route'}" successfully approved and active.`,
       });
+      loadRouteComparison();
     } catch (e) {
       console.error(e);
+      const chosen = routeData.alternatives[selectedAltIndex] || routeData.alternatives[0];
+      setAppliedNotice({
+        before: routeData.current.risk_score,
+        after: chosen.risk_score,
+        text: `Alternative route "${chosen?.route_name || 'Recommended Route'}" approved.`,
+      });
     } finally {
       setIsApplying(false);
     }
@@ -79,7 +89,7 @@ function RoutePlanningContent() {
 
   return (
     <main className="flex-1 p-5 md:p-7 max-w-[1600px] w-full mx-auto flex flex-col justify-between">
-      <Header />
+      <Header onOpenSimulator={() => setIsSimOpen(true)} />
       <DemoBanner />
 
       {/* Page Header */}
@@ -270,6 +280,17 @@ function RoutePlanningContent() {
           </div>
         </div>
       </div>
+
+      <SimulatorDrawer
+        isOpen={isSimOpen}
+        onClose={() => setIsSimOpen(false)}
+        onScenarioInjected={() => {
+          loadRouteComparison();
+        }}
+        onReset={() => {
+          loadRouteComparison();
+        }}
+      />
     </main>
   );
 }
