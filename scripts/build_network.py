@@ -64,7 +64,7 @@ def nearest_n(loc_id, candidates, n=3):
 def osrm_route(a, b):
     """Return (distance_km, duration_s, geometry_geojson) or None on failure."""
     la, ba = LOC_BY_ID[a], LOC_BY_ID[b]
-    coords = f"{ba['lng']},{ba['lat']};{la['lng']},{la['lat']}"
+    coords = f"{la['lng']},{la['lat']};{ba['lng']},{ba['lat']}"
     url = f"{OSRM_BASE}/route/v1/driving/{coords}?overview=simplified&geometries=geojson&steps=false"
     try:
         r = requests.get(url, timeout=8)

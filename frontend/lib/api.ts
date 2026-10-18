@@ -8,9 +8,10 @@ import {
   RouteCompareData,
   ApproveResult,
 } from './types';
-import { mockStore } from './mockData';
+import { mockStore, scenariosList } from './mockData';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl.replace(/\/+$/, '')}/api`;
 
 // ---------------------------------------------------------------------------
 // Auto-detect backend availability
@@ -144,5 +145,9 @@ export const api = {
       () => mockStore.resetSimulation(),
       { method: 'POST' }
     );
+  },
+
+  getScenarios: (): Promise<any[]> => {
+    return fetchWithFallback('/simulate/scenarios', () => scenariosList);
   },
 };
