@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Search, Bell, SlidersHorizontal, Activity } from 'lucide-react';
 import { api } from '../lib/api';
 import { Disruption } from '../lib/types';
@@ -88,10 +89,26 @@ export default function Header({ onOpenSimulator, activeRisksCount: propCount }:
         </p>
       </div>
 
-      {/* Header Actions */}
+      {/* Header Actions & Nav */}
       <div className="flex items-center gap-3">
+        {/* Top Header Navigation Links */}
+        <nav className="hidden sm:flex items-center gap-1 bg-cream-100/90 p-1 rounded-xl border border-cream-border text-xs font-semibold">
+          <Link
+            href="/risks"
+            className="px-2.5 py-1.5 rounded-lg text-charcoal-700 hover:text-charcoal-900 hover:bg-cream-200 transition"
+          >
+            Risk Monitor
+          </Link>
+          <Link
+            href="/routes"
+            className="px-2.5 py-1.5 rounded-lg text-charcoal-700 hover:text-charcoal-900 hover:bg-cream-200 transition"
+          >
+            Route Planning
+          </Link>
+        </nav>
+
         {/* Search Bar */}
-        <div className="relative min-w-[260px] md:min-w-[320px]">
+        <div className="relative min-w-[220px] md:min-w-[280px]">
           <Search className="w-4 h-4 text-charcoal-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
@@ -103,7 +120,7 @@ export default function Header({ onOpenSimulator, activeRisksCount: propCount }:
         {/* Simulator Drawer Trigger */}
         <button
           onClick={onOpenSimulator}
-          className="flex items-center gap-1.5 px-3 py-2 bg-cream-pill hover:bg-cream-300 text-charcoal-900 font-semibold text-xs rounded-xl border border-cream-border shadow-xs transition active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-2 bg-cream-pill hover:bg-cream-300 text-charcoal-900 font-semibold text-xs rounded-xl border border-cream-border shadow-xs transition active:scale-95 cursor-pointer"
           title="Open Disruption Simulator"
         >
           <Activity className="w-3.5 h-3.5 text-amber-700" />
@@ -155,20 +172,41 @@ export default function Header({ onOpenSimulator, activeRisksCount: propCount }:
                 )}
                 {disruptions.map((d) => {
                   const colors = severityColor(d.level);
+                  const affectedShipment = d.impact?.affected_shipments?.[0];
                   return (
-                    <div key={d.id} className={`p-3 ${colors.bg} border ${colors.border} rounded-xl text-xs space-y-1`}>
+                    <div key={d.id} className={`p-3 ${colors.bg} border ${colors.border} rounded-xl text-xs space-y-1.5`}>
                       <div className="flex items-center justify-between">
                         <span className={`font-bold ${colors.title}`}>{d.issue_title}</span>
                         <span className={`text-[10px] font-semibold ${colors.badge}`}>
-                          {d.level.charAt(0).toUpperCase() + d.level.slice(1)} Risk ({d.risk_score}/100)
+                          {d.level.charAt(0).toUpperCase() + d.level.slice(1)} ({d.risk_score}/100)
                         </span>
                       </div>
-                      <p className="text-[11px] text-charcoal-600">
+                      <p className="text-[11px] text-charcoal-700 leading-snug">
                         {d.entity.name} — {d.impact_summary}
                       </p>
-                      <span className="text-[10px] text-charcoal-400">
-                        {d.time_ago || `Detected: ${new Date(d.detected_at).toLocaleTimeString()}`}
-                      </span>
+                      <div className="flex items-center justify-between pt-1 border-t border-cream-border/50 text-[10px]">
+                        <span className="text-charcoal-500 font-mono">
+                          {d.time_ago || `Detected: ${new Date(d.detected_at).toLocaleTimeString()}`}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`/risks?id=${d.id}`}
+                            className="text-charcoal-600 hover:text-charcoal-900 underline font-semibold"
+                            onClick={() => setIsNotifOpen(false)}
+                          >
+                            Inspect
+                          </a>
+                          {affectedShipment && (
+                            <a
+                              href={`/routes?shipment_id=${affectedShipment}&disruption_id=${d.id}`}
+                              className="text-emerald-700 font-bold hover:text-emerald-900 underline flex items-center gap-0.5"
+                              onClick={() => setIsNotifOpen(false)}
+                            >
+                              ⚡ Reroute {affectedShipment} →
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

@@ -3,9 +3,10 @@
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import Header from '../../components/Header';
 import DemoBanner from '../../components/DemoBanner';
+import SimulatorDrawer from '../../components/SimulatorDrawer';
 import { api } from '../../lib/api';
-import { Disruption, DisruptionDetail, DisruptionType, RiskLevel, DisruptionStatus } from '../../lib/types';
-import { AlertTriangle, Filter, Clock, ShieldAlert, CheckCircle2, ChevronRight, Activity, ArrowLeft } from 'lucide-react';
+import { Disruption, DisruptionDetail, DisruptionType, RiskLevel, DisruptionStatus, Shipment } from '../../lib/types';
+import { AlertTriangle, Filter, Clock, ShieldAlert, CheckCircle2, ChevronRight, Activity, ArrowLeft, Package, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,36 +15,88 @@ function RiskMonitorContent() {
   const selectedIdFromQuery = searchParams.get('id');
 
   const [disruptions, setDisruptions] = useState<Disruption[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
   const [selectedDisruption, setSelectedDisruption] = useState<DisruptionDetail | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState<boolean>(false);
+
+  const loadData = async (preferredId?: string) => {
+    try {
+      const [list, shipList] = await Promise.all([
+        api.getDisruptions(),
+        api.getShipments(),
+      ]);
+      setDisruptions(list);
+      setShipments(shipList);
+
+      const targetId = preferredId || selectedIdFromQuery || (list.length > 0 ? list[0].id : null);
+      if (targetId) {
+        const detail = await api.getDisruptionDetail(targetId);
+        setSelectedDisruption(detail);
+        const targetSid = detail?.impact?.affected_shipments?.[0];
+        if (typeof window !== 'undefined' && targetSid) {
+          localStorage.setItem('selected_shipment_id', targetSid);
+          localStorage.setItem('selected_disruption_id', detail.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading disruptions:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function load() {
-      try {
-        const list = await api.getDisruptions();
-        setDisruptions(list);
-
-        const initialTargetId = selectedIdFromQuery || (list.length > 0 ? list[0].id : null);
-        if (initialTargetId) {
-          const detail = await api.getDisruptionDetail(initialTargetId);
-          setSelectedDisruption(detail);
-        }
-      } catch (err) {
-        console.error('Error loading disruptions:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    load();
+    loadData();
   }, [selectedIdFromQuery]);
+
+  const handleScenarioInjected = async (scenarioId: string) => {
+    try {
+      const [list, shipList] = await Promise.all([
+        api.getDisruptions(),
+        api.getShipments(),
+      ]);
+      setDisruptions(list);
+      setShipments(shipList);
+
+      const storedDid = typeof window !== 'undefined' ? localStorage.getItem('selected_disruption_id') : null;
+      const storedSid = typeof window !== 'undefined' ? localStorage.getItem('selected_shipment_id') : null;
+
+      let target = list.find((d) => d.id === storedDid);
+      if (!target && storedSid) {
+        target = list.find((d) => d.impact?.affected_shipments?.includes(storedSid));
+      }
+      if (!target && list.length > 0) {
+        target = list[0];
+      }
+
+      if (target) {
+        const detail = await api.getDisruptionDetail(target.id);
+        setSelectedDisruption(detail);
+      }
+    } catch (err) {
+      console.error('Error updating after scenario injection:', err);
+    }
+  };
+
+  const handleReset = async () => {
+    await loadData();
+  };
 
   const handleSelectDisruption = async (id: string) => {
     try {
       const detail = await api.getDisruptionDetail(id);
       setSelectedDisruption(detail);
+      const targetSid = detail?.impact?.affected_shipments?.[0];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selected_disruption_id', id);
+        if (targetSid) {
+          localStorage.setItem('selected_shipment_id', targetSid);
+        }
+      }
     } catch (err) {
       console.error(err);
     }
@@ -84,8 +137,15 @@ function RiskMonitorContent() {
 
   return (
     <main className="flex-1 p-5 md:p-7 max-w-[1600px] w-full mx-auto flex flex-col justify-between">
-      <Header />
+      <Header onOpenSimulator={() => setIsSimulatorOpen(true)} />
       <DemoBanner />
+
+      <SimulatorDrawer
+        isOpen={isSimulatorOpen}
+        onClose={() => setIsSimulatorOpen(false)}
+        onScenarioInjected={handleScenarioInjected}
+        onReset={handleReset}
+      />
 
       {/* Page Title & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
@@ -98,8 +158,18 @@ function RiskMonitorContent() {
           </p>
         </div>
 
-        {/* Filter Bar */}
+        {/* Filter Bar & Simulator Trigger */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Live Scenario Simulator Button */}
+          <button
+            onClick={() => setIsSimulatorOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
+            title="Open Live Scenario Simulator"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Live Scenario Simulator</span>
+          </button>
+
           {/* Type Filter */}
           <select
             value={typeFilter}
@@ -273,6 +343,41 @@ function RiskMonitorContent() {
                     {selectedDisruption.impact_summary}
                   </div>
                 </div>
+
+                {/* Direct 1-Click Action to Route Optimizer */}
+                {(() => {
+                  const targetSid = selectedDisruption.impact.affected_shipments?.[0];
+                  const targetShip = shipments.find((s) => s.id === targetSid);
+                  if (!targetSid) return null;
+                  return (
+                    <div className="mt-3 pt-3 border-t border-cream-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 p-3.5 rounded-xl border border-cream-300">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-charcoal-900 font-mono">
+                            {targetSid}
+                          </span>
+                          {targetShip?.sku && (
+                            <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100 text-amber-900 border border-amber-200 font-mono">
+                              {targetShip.sku}
+                            </span>
+                          )}
+                          <span className="text-xs font-semibold text-charcoal-700">
+                            {targetShip?.origin_name || 'Origin'} ➔ {targetShip?.destination_name || 'Destination'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-charcoal-600 mt-0.5">
+                          Cargo: <strong>{targetShip?.sku_name || targetShip?.sku || 'Critical Freight'}</strong> ({targetShip?.qty ?? 500} units)
+                        </p>
+                      </div>
+                      <Link
+                        href={`/routes?shipment_id=${targetSid}&disruption_id=${selectedDisruption.id}`}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 shadow-xs transition active:scale-95 shrink-0 whitespace-nowrap"
+                      >
+                        <span>⚡ Plan Route ({targetShip?.sku || targetSid}) →</span>
+                      </Link>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Evidence Table (Section 7, 8 & 11) */}
@@ -334,32 +439,42 @@ function RiskMonitorContent() {
                     Proposed Mitigations & Recommendations
                   </h4>
                   <div className="space-y-2">
-                    {selectedDisruption.recommendations.map((rec) => (
-                      <div
-                        key={rec.id}
-                        className="p-3 bg-cream-50 rounded-xl border border-cream-border flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-charcoal-900">
-                              {rec.title}
-                            </span>
-                            <span className="text-[10px] font-bold uppercase bg-cream-200 px-1.5 py-0.5 rounded text-charcoal-600">
-                              {rec.action_type}
-                            </span>
-                          </div>
-                          <p className="text-xs text-charcoal-600 mt-1">
-                            {rec.explanation}
-                          </p>
-                        </div>
-                        <Link
-                          href={`/routes?shipment_id=${rec.params?.shipment_id || 'S-104'}`}
-                          className="px-3 py-1.5 bg-charcoal-900 text-white rounded-lg text-xs font-semibold hover:bg-charcoal-800 transition shrink-0"
+                    {selectedDisruption.recommendations.map((rec) => {
+                      const targetSid = rec.params?.shipment_id || selectedDisruption.impact?.affected_shipments?.[0];
+                      const targetShip = shipments.find((s) => s.id === targetSid);
+                      return (
+                        <div
+                          key={rec.id}
+                          className="p-3 bg-cream-50 rounded-xl border border-cream-border flex items-center justify-between gap-3"
                         >
-                          Plan Route
-                        </Link>
-                      </div>
-                    ))}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-charcoal-900">
+                                {rec.title}
+                              </span>
+                              <span className="text-[10px] font-bold uppercase bg-cream-200 px-1.5 py-0.5 rounded text-charcoal-600">
+                                {rec.action_type}
+                              </span>
+                            </div>
+                            <p className="text-xs text-charcoal-600 mt-1">
+                              {rec.explanation}
+                            </p>
+                          </div>
+                          {targetSid ? (
+                            <Link
+                              href={`/routes?shipment_id=${targetSid}&disruption_id=${selectedDisruption.id}&rec_id=${rec.id}`}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition shrink-0 whitespace-nowrap"
+                            >
+                              Plan Route ({targetShip?.sku || targetSid}) →
+                            </Link>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-cream-200 text-charcoal-600 rounded-lg text-xs font-semibold shrink-0">
+                              Monitoring
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

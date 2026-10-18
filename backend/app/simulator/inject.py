@@ -50,15 +50,10 @@ async def inject_scenario(
         "SKU-103": "SKU-PHMA",
         "SKU-104": "SKU-AUTO",
     }
-    LANE_MAP = {
-        "L_pune_mumbai": "L_pune_delhi",
-        "L_surat_mumbai": "L_surat_delhi",
-    }
 
     # 1. Traffic injection
     if kind in ("traffic", "compound_weather_traffic"):
-        raw_lane_id = inject_data.get("lane_id", "")
-        lane_id = LANE_MAP.get(raw_lane_id, raw_lane_id)
+        lane_id = inject_data.get("lane_id", "")
         ratio = inject_data.get("ratio", 1.8)
         severity = max(0.1, min(1.0, (ratio - 1.0) / 1.5))
         if lane_id:
@@ -66,8 +61,7 @@ async def inject_scenario(
 
     # 2. Weather injection
     if kind in ("weather", "compound_weather_traffic"):
-        raw_lane_id = inject_data.get("lane_id", "")
-        lane_id = LANE_MAP.get(raw_lane_id, raw_lane_id)
+        lane_id = inject_data.get("lane_id", "")
         precip = inject_data.get("precip_mm", 30.0)
         gust = inject_data.get("gust_kmh", 80.0)
         code = inject_data.get("weather_code", 95)

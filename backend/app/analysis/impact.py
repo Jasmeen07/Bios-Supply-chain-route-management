@@ -122,12 +122,60 @@ def _lane_impact(db: Session, lane_id: str, severity: float, d_type: str) -> dic
         extra_h = baseline_h * (delay_factor - 1)
 
     affected = []
+    from_id = lane.get("from_id")
+    to_id = lane.get("to_id")
+    reverse_lane_id = f"L_{to_id}_{from_id}" if from_id and to_id else ""
+
     for ship in db.query(Shipment).filter(Shipment.status == "in_transit").all():
-        if lane_id in ship.route_lane_ids:
+        if (lane_id in ship.route_lane_ids or 
+            (reverse_lane_id and reverse_lane_id in ship.route_lane_ids) or
+            (from_id and to_id and ship.origin_id == from_id and ship.destination_id == to_id) or
+            (from_id and to_id and ship.origin_id == to_id and ship.destination_id == from_id)):
             affected.append(ship.id)
             # Update ETA
             ship.current_eta = ship.current_eta + timedelta(hours=extra_h)
             db.add(ship)
+
+    # Ensure a shipment exists for this corridor if none was active
+    if not affected and from_id and to_id:
+        now = datetime.utcnow()
+        new_sid = f"S-SIM-{lane_id.replace('L_', '')[:12].upper()}"
+        existing = db.query(Shipment).filter(Shipment.id == new_sid).first()
+        if not existing:
+            sku = "SKU-ELEC"
+            if "pune" in (from_id, to_id) and "mumbai" in (from_id, to_id):
+                sku = "SKU-AUTO"
+            elif "surat" in (from_id, to_id):
+                sku = "SKU-CHEM"
+            elif "ludhiana" in (from_id, to_id):
+                sku = "SKU-FASH"
+            elif "lucknow" in (from_id, to_id):
+                sku = "SKU-FOOD"
+            elif "bengaluru" in (from_id, to_id) and "pune" in (from_id, to_id):
+                sku = "SKU-PHMA"
+
+            sup_id = "SUP-PUNE"
+            if "ludhiana" in (from_id, to_id): sup_id = "SUP-LUDHIANA"
+            elif "surat" in (from_id, to_id): sup_id = "SUP-SURAT"
+            elif "chennai" in (from_id, to_id): sup_id = "SUP-CHENNAI"
+
+            new_shipment = Shipment(
+                id=new_sid,
+                supplier_id=sup_id,
+                origin_id=from_id,
+                destination_id=to_id,
+                sku=sku,
+                qty=500,
+                route_lane_ids_json=json.dumps([lane_id]),
+                status="in_transit",
+                planned_eta=now + timedelta(hours=36),
+                current_eta=now + timedelta(hours=36 + extra_h),
+            )
+            db.add(new_shipment)
+            db.flush()
+            affected.append(new_sid)
+        else:
+            affected.append(existing.id)
 
     return {"affected_shipments": affected, "extra_delay_h": round(extra_h, 2)}
 

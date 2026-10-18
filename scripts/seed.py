@@ -173,35 +173,144 @@ def seed_all(reset: bool = False, db_session = None):
                     return [l1, l2]
             return [f"L_{from_id}_{to_id}"]  # fallback (may not exist)
 
-        num_shipments = rng.randint(12, 15)
-        for i in range(num_shipments):
-            sup_loc = rng.choice(supplier_locs)
-            sup_id = f"SUP-{sup_loc['id'].upper()}"
-            avail_skus = SUPPLIER_SKUS.get(sup_loc["id"], [s["sku"] for s in SKUS])
-            sku_id = rng.choice(avail_skus)
+        # Canonical shipments mapping 1-to-1 with contracts/scenarios.yaml corridors
+        CANONICAL_SHIPMENTS = [
+            {
+                "id": "S-101",
+                "supplier_id": "SUP-LUDHIANA",
+                "origin_id": "ludhiana",
+                "destination_id": "delhi",
+                "sku": "SKU-FASH",
+                "qty": 900,
+                "route": ["L_ludhiana_delhi"],
+                "status": "in_transit",
+                "delay_h": 1.0,
+            },
+            {
+                "id": "S-102",
+                "supplier_id": "SUP-PUNE",
+                "origin_id": "nagpur",
+                "destination_id": "hyderabad",
+                "sku": "SKU-AUTO",
+                "qty": 600,
+                "route": ["L_nagpur_hyderabad"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-103",
+                "supplier_id": "SUP-CHENNAI",
+                "origin_id": "bengaluru",
+                "destination_id": "chennai",
+                "sku": "SKU-ELEC",
+                "qty": 750,
+                "route": ["L_bengaluru_chennai"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-104",
+                "supplier_id": "SUP-PUNE",
+                "origin_id": "pune",
+                "destination_id": "delhi",
+                "sku": "SKU-ELEC",
+                "qty": 450,
+                "route": ["L_pune_delhi"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-105",
+                "supplier_id": "SUP-SURAT",
+                "origin_id": "surat",
+                "destination_id": "delhi",
+                "sku": "SKU-CHEM",
+                "qty": 400,
+                "route": ["L_surat_delhi"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-106",
+                "supplier_id": "SUP-PUNE",
+                "origin_id": "pune",
+                "destination_id": "mumbai",
+                "sku": "SKU-AUTO",
+                "qty": 1200,
+                "route": ["L_pune_mumbai"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-107",
+                "supplier_id": "SUP-LUDHIANA",
+                "origin_id": "delhi",
+                "destination_id": "lucknow",
+                "sku": "SKU-FOOD",
+                "qty": 850,
+                "route": ["L_delhi_lucknow"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-108",
+                "supplier_id": "SUP-PUNE",
+                "origin_id": "delhi",
+                "destination_id": "jaipur",
+                "sku": "SKU-CONS",
+                "qty": 650,
+                "route": ["L_delhi_jaipur"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-109",
+                "supplier_id": "SUP-CHENNAI",
+                "origin_id": "chennai",
+                "destination_id": "hyderabad",
+                "sku": "SKU-PHMA",
+                "qty": 500,
+                "route": ["L_chennai_delhi", "L_delhi_hyderabad"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-110",
+                "supplier_id": "SUP-SURAT",
+                "origin_id": "surat",
+                "destination_id": "mumbai",
+                "sku": "SKU-CHEM",
+                "qty": 420,
+                "route": ["L_surat_delhi", "L_delhi_mumbai"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+            {
+                "id": "S-111",
+                "supplier_id": "SUP-PUNE",
+                "origin_id": "pune",
+                "destination_id": "bengaluru",
+                "sku": "SKU-PHMA",
+                "qty": 550,
+                "route": ["L_pune_bengaluru"],
+                "status": "in_transit",
+                "delay_h": 0.0,
+            },
+        ]
 
-            dest_id = rng.choice(store_ids)
-            route = find_route(sup_loc["id"], dest_id)
-
-            # Calculate route duration
-            total_dur_s = sum(
-                lane_map[lid]["baseline_duration_s"]
-                for lid in route if lid in lane_map
-            )
-
-            planned_eta = now + timedelta(hours=rng.uniform(12, 120))
-            # Some shipments slightly delayed
-            current_eta = planned_eta + timedelta(hours=rng.uniform(-2, 8))
+        for s_def in CANONICAL_SHIPMENTS:
+            planned_eta = now + timedelta(hours=36)
+            current_eta = planned_eta + timedelta(hours=s_def["delay_h"])
 
             db.add(Shipment(
-                id=f"S-{100 + i}",
-                supplier_id=sup_id,
-                origin_id=sup_loc["id"],
-                destination_id=dest_id,
-                sku=sku_id,
-                qty=rng.randint(100, 1000),
-                route_lane_ids_json=json.dumps(route),
-                status="in_transit",
+                id=s_def["id"],
+                supplier_id=s_def["supplier_id"],
+                origin_id=s_def["origin_id"],
+                destination_id=s_def["destination_id"],
+                sku=s_def["sku"],
+                qty=s_def["qty"],
+                route_lane_ids_json=json.dumps(s_def["route"]),
+                status=s_def["status"],
                 planned_eta=planned_eta,
                 current_eta=current_eta,
             ))
@@ -209,7 +318,7 @@ def seed_all(reset: bool = False, db_session = None):
         db.add(AuditLog(event="seed", payload_json=json.dumps({"seed": SEED, "ts": now.isoformat()})))
         db.commit()
         print(f"Seeded database: {len(network['locations'])} locations, {len(network['lanes'])} lanes, "
-              f"{len(SKUS)} SKUs, 4 suppliers, {num_shipments} shipments.")
+              f"{len(SKUS)} SKUs, 4 suppliers, {len(CANONICAL_SHIPMENTS)} shipments.")
 
     finally:
         if own_db:

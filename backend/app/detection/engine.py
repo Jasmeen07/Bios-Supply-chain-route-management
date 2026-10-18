@@ -274,7 +274,8 @@ def _apply_corroboration(db, open_disruptions):
 
 
 def _disruption_summary(d: Disruption) -> dict:
-    return {
+    title = f"{d.type.replace('_', ' ').title()}: {d.entity_name}"
+    summary = {
         "id": d.id,
         "type": d.type,
         "entity_id": d.entity_id,
@@ -283,4 +284,6 @@ def _disruption_summary(d: Disruption) -> dict:
         "risk_score": d.risk_score,
         "level": d.level,
         "status": d.status,
+        "issue_title": title,
     }
+    return {**summary, "disruption": summary}
