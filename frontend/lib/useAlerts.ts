@@ -28,7 +28,7 @@ export function useAlerts(onEvent?: (event: WsAlertEvent) => void) {
     let mockUnsubscribe: (() => void) | null = null;
 
     // Always listen to mock store events (works in both mock & live mode)
-    mockUnsubscribe = subscribeAlerts((event) => {
+    mockUnsubscribe = subscribeAlerts((event: WsAlertEvent) => {
       setLatestEvent(event);
       if (callbackRef.current) {
         callbackRef.current(event);

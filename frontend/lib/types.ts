@@ -159,6 +159,12 @@ export interface Supplier {
   on_time_rate: number;
   reliability_score: number;
   active_disruptions_count: number;
+  location?: string;
+  reliability?: number;
+  active_shipments_count?: number;
+  avg_delay_days?: number;
+  risk_score?: number;
+  status?: string;
 }
 
 export interface RouteOption {
@@ -208,6 +214,8 @@ export interface SimulatorScenario {
   name: string;
   description: string;
   type: string;
+  target_corridor?: string;
+  affected_shipment_id?: string;
   expected?: {
     disruption_type: string;
     min_level: string;
